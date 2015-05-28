@@ -1,0 +1,17 @@
+# After "already" is called, following tasks are skipped until a next block.
+# You can use a special helper "when" which takes an argument to be evaluated
+# and if it exits true, runs a following command.
+
+@ Install Midnight Commander unless already
+  - when 'which mc' already
+  - yum install -y mc
+
+@ Install VIM unless already
+  - when 'which vim' already
+  - yum install -y vim
+
+
+# There is also a helper "already_if" that takes a command to be executed
+# and if it exits true, following tasks are skipped,
+# - already_if which mc
+# It is just more obvious if the word "already" stands in the beginning.

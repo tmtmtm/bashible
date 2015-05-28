@@ -1,0 +1,9 @@
+# Using variables in bashible playbooks is simple: Environment variables.
+
+@ Install Midnight Commander unless already or if a variable $REINSTALL is present
+  - when 'which mc && ! is_set REINSTALL' already
+  - yum install -y mc
+
+# The is_set is a helper; you could rewrite the line like this,
+# - when 'which mc && ! test -n "$REINSTALL" ' already
+

@@ -1,0 +1,335 @@
+#!/bin/bash
+
+_BASHIBLE="$0"
+IFS=','; _TAGS=($TAGS); IFS=' '
+_HOSTNAME=`hostname`
+_TASKS_STARTED=0
+_SKIP=0
+_SCRIPT=''
+_BASE_DIR=''
+_ORIG_BASE_DIR=''
+_CALLED=''
+_NAV=''
+
+help() {
+  echo "usage: bashible playbook.ble"
+  echo
+  exit 1
+}
+
+if [ "$1" = "run" ]; then
+
+  # when called internally to run a sudoed command
+  _SCRIPT=_RUN
+  shift
+  # now it will load all functions below and then run the command (see end of the file)
+
+elif [ "$1" = -h -o "$1" = --help ]; then
+
+  help
+
+else
+
+  _SCRIPT="$1"
+
+fi
+
+if [ -z "${_SCRIPT}" ]; then
+   help
+fi
+
+### CORE FUNCTIONS ####
+
+containsElement() {
+  local e
+  for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
+  return 1
+}
+
+quiet() {
+   "$@" >/dev/null 2>&1
+}
+
+fail() {
+   echo -e "\033[1;37;41m ${_NAV}: $*, exiting \033[0m"
+   exit 1
+}
+
+info() {
+  echo -e "   \033[32m($*)\033[0m"
+}
+
+warn() {
+  echo -e "   \033[31m($*)\033[0m"
+}
+
+# use to call a bashible "playbook" instead of sourcing it
+call() {
+  quiet pushd "${_BASE_DIR}" # otherwise relative paths may not work
+  local path=`readlink -e "$1"`
+  quiet popd
+  if echo "${_CALLED}" | grep -q "$path"; then
+    return
+  fi
+  _CALLED="${_CALLED}:$path"
+  (
+    _NAV="${_NAV}/`basename $1 | sed "s/\.ble\$//" `"
+    _BASE_DIR=`dirname "$path"`
+    _ORIG_BASE_DIR="${_BASE_DIR}"
+    _TASKS_STARTED=0
+    _SKIP=0
+    cd "${_BASE_DIR}" || fail "call $1: can't enter base dir '${_BASE_DIR}'"
+    source "$1" || fail "call $1: can't source the file, use either ./ prefix or absolute path"
+  ) || exit 1
+}
+
+# set base dir (will be chdired to it on each @ block)
+base_dir() {
+  mkdir -p $1 || fail "can't create base dir"
+  _BASE_DIR=$1
+}
+
+reset_base_dir() {
+  _BASE_DIR="${_ORIG_BASE_DIR}"
+}
+
+# represents a block; always chdirs to the base_dir (default = current directory)
+@() {
+   _SKIP=0
+   cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
+   echo -e "\n\033[1;37;44m ${_NAV}: $* \033[0m"
+}
+
+# represents a task; if the task fails, the bashible script is stopped
+# if the block has been skipped, does nothing
+-() {
+   _TASKS_STARTED=1
+   if [ "${_SKIP}" != 1 ]; then
+     echo -e "\033[37m - $* \033[0m"
+     "$@" || fail "'$@' failed (in `pwd`)";
+   fi
+}
+
+# run following command as an user
+as() {
+   local user=$1; shift
+   # can't be -i (login shell) otherwise -E won't work, it would also chdir to homedir
+   # PATH is usually erased by sudo, has to be preserved explicitly
+   /usr/bin/env sudo -E -u "$user" /usr/bin/env env -- PATH="$PATH" "${_BASHIBLE}" run "$@" || fail "sudo command failed (in `pwd`)"
+}
+
+# skip next tasks if the current hostname is not in defined
+# if called before all blocks, can skip all of them
+only_on() {
+   if ! containsElement "${_HOSTNAME}" "$@"; then
+      if [ "${_TASKS_STARTED}" = 0 ]; then
+         warn "skipping all tasks here on ${_HOSTNAME}"
+         exit
+      else
+         warn "not on ${_HOSTNAME}, skipping"
+         _SKIP=1
+      fi
+   fi
+}
+
+# skip next tasks if the tag is not in required tags
+tag() {
+   if [ "${#_TAGS[@]}" -gt 0 ]; then
+     if ! containsElement "$1" "${_TAGS[@]}"; then
+       warn "does not match tags, skipping"
+       _SKIP=1
+     fi
+   fi
+}
+
+may_fail() {
+  "$@"
+  return 0
+}
+
+when() {
+   if eval "$1"; then
+      shift
+      "$@"
+   fi
+}
+
+unless() {
+   if ! eval "$1"; then
+      shift
+      "$@"
+   fi
+}
+
+not() {
+  "$@" && return 1 || return 0
+}
+
+stop() {
+  info "stopping execution of the script"
+  exit 0
+}
+
+stop_if() {
+  "$@" && stop || return 0
+}
+
+already() {
+   info "already, skipping following tasks"
+   _SKIP=1
+}
+
+# the same as skip_if, just a different message
+already_if() {
+  "$@" && already || return 0
+}
+
+skip() {
+   info "skipping following tasks"
+   _SKIP=1
+}
+
+skip_if() {
+  "$@" && skip || return 0
+}
+
+
+### USEFUL HELPERS ###
+
+is_set() {
+   [ -n "`eval echo "$""$1"`" ]
+}
+
+symlink() {
+  src=$1
+  dest=$2
+  if test -L "$2"; then
+    local curr="`readlink "$2"`"
+    if [ "$curr" != "$1" ]; then
+       fail "symlink exists already, but points to different location: $curr (should $2)"
+    fi
+    info "already"
+  else
+    ln -s "$1" "$2" || fail "can't create symlink"
+  fi
+}
+
+# add user unless already;
+# has the same args as useradd, but username must be the first argument
+user_add() {
+   local username=$1
+   if ! quiet id "$username"; then
+     useradd "$@" || fail "can't add user"
+   else
+     info "already"
+   fi
+}
+
+user_del() {
+   local username=$1
+   if quiet id "$username"; then
+     userdel "$username" || fail "can't del user"
+   else
+     info "already"
+   fi
+}
+
+add_line() {
+   local line="$1"
+   local path="$2"
+   quiet head -n 1 "$path" || fail "can't read file '$path'"
+   if ! quiet egrep -e "^ *$line" "$path"; then
+     echo "$line" >> "$path" || fail "can't write to file '$path'"
+   else
+     info "already"
+   fi
+}
+
+append_line() {
+   local line="$1"
+   local path="$2"
+   quiet tail -n 1 "$path" || fail "can't read file '$path'"
+   if [ "` tail -n 1 "$path" `" != "$line" ]; then
+     echo "$line" >> "$path" || fail "can't write to file '$path'"
+   else
+     info "already"
+   fi
+}
+
+prepend_line() {
+   local line="$1"
+   local path="$2"
+   quiet head -n 1 "$path" || fail "can't read file '$path'"
+   if [ "` head -n 1 "$path" `" != "$line" ]; then
+     sed -i "1i $line" "$path" || fail "can't edit file '$path'"
+   else
+     info "already"
+   fi
+}
+
+comment_line_with() {
+   local match="$1"
+   local path="$2"
+   [ ! -f "$path" ] && fail "file '$path' not found"
+   sed -i -r -e 's/^([^#]*'$match'.*)$/#\1/' "$path"
+}
+
+uncomment_line_with() {
+   local match="$1"
+   local path="$2"
+   [ ! -f "$path" ] && fail "file '$path' not found"
+   sed -i -r -e 's/^ *#(.*?'$match'.*)$/\1/' "$path"
+}
+
+replace_line_with() {
+   local match="$1"
+   local replacement="$2"
+   local path="$3"
+   [ ! -f "$path" ] && fail "file '$path' not found"
+   sed -i "s\\$match\\$replace\\" "$replacement" "$path"
+}
+
+is_rpm_installed() {
+   for i in `rpm -q "$1"`; do
+      version="${i##$1}"
+      if echo "$version" | egrep -q -e "^-[0-9]"; then
+        return 0
+      fi
+   done
+   return 1
+}
+
+yum_install() {
+   while [ -n "$1" ]; do
+     if ! is_rpm_installed "$1"; then
+        info "$1 seems to be not installed yet"
+        yum install -y "$1" || fail "can't install $1"
+     else
+        info "$1 already"
+     fi
+     shift
+   done
+}
+
+# WARN: gem_install is provided by RVM and it takes precedence! therefore this is install_gem
+install_gem() {
+   while [ -n "$1" ]; do
+     if ! gem list "$1" | grep -q -e "^$1 "; then
+       gem install "$1" || fail "can't install gem"
+     else
+       info "already"
+     fi
+     shift
+   done
+}
+
+### DO THE PROCESS ###
+
+if [ "${_SCRIPT}" != _RUN ]; then
+  # when a script passed on stdin
+  call "${_SCRIPT}"
+else
+  # when running a sudoed command
+  "$@"
+fi
+
