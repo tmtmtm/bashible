@@ -228,26 +228,6 @@ symlink() {
   fi
 }
 
-# add user unless already;
-# has the same args as useradd, but username must be the first argument
-user_add() {
-   local username=$1
-   if ! quiet id "$username"; then
-     useradd "$@" || fail "can't add user"
-   else
-     info "already"
-   fi
-}
-
-user_del() {
-   local username=$1
-   if quiet id "$username"; then
-     userdel "$username" || fail "can't del user"
-   else
-     info "already"
-   fi
-}
-
 add_line() {
    local line="$1"
    local path="$2"
