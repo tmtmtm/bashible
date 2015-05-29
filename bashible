@@ -1,15 +1,17 @@
 #!/bin/bash
 
-_BASHIBLE="$0"
-IFS=','; _TAGS=($TAGS); IFS=' '
+IFS=' '
+_BASHIBLE="$0"        # the bashible script itself
+IFS=','; _TAGS=($TAGS); IFS=' '  # when TAGS env is used (see "tag" helper)
 _HOSTNAME=`hostname`
-_TASKS_STARTED=0
-_SKIP=0
-_SCRIPT=''
-_BASE_DIR=''
-_ORIG_BASE_DIR=''
-_CALLED=''
-_NAV=''
+_BLOCKS_STARTED=0     # zero before any block started
+_SKIP=0               # skipping mode? reseted on next block
+_PLAYBOOK=''            # script to be executed
+_BASE_DIR=''          # current base dir for blocks in a playbook
+_ORIG_BASE_DIR=''     # orig base dir when a playbook has been called
+_CALLED=''            # already called playbooks
+_NAV=''               # navigation when calling sub-playbooks
+
 
 help() {
   echo "usage: bashible playbook.ble"
@@ -20,9 +22,12 @@ help() {
 if [ "$1" = "run" ]; then
 
   # when called internally to run a sudoed command
-  _SCRIPT=_RUN
+  _PLAYBOOK=_SUDO_
+  # _IMPORTED and PATH will be set during the command run
   shift
-  # now it will load all functions below and then run the command (see end of the file)
+
+  # now it will parse all functions below and then run the command 
+  # in the end
 
 elif [ "$1" = -h -o "$1" = --help ]; then
 
@@ -30,13 +35,15 @@ elif [ "$1" = -h -o "$1" = --help ]; then
 
 else
 
-  _SCRIPT="$1"
+  _IMPORTED=':'         # imported files (re-sourced after sudo)
+  _PLAYBOOK="$1"
 
 fi
 
-if [ -z "${_SCRIPT}" ]; then
+if [ -z "${_PLAYBOOK}" ]; then
    help
 fi
+
 
 ### CORE FUNCTIONS ####
 
@@ -76,10 +83,10 @@ call() {
     _NAV="${_NAV}/`basename $1 | sed "s/\.ble\$//" `"
     _BASE_DIR=`dirname "$path"`
     _ORIG_BASE_DIR="${_BASE_DIR}"
-    _TASKS_STARTED=0
+    _BLOCKS_STARTED=0
     _SKIP=0
-    cd "${_BASE_DIR}" || fail "call $1: can't enter base dir '${_BASE_DIR}'"
-    source "$1" || fail "call $1: can't source the file, use either ./ prefix or absolute path"
+    cd "${_BASE_DIR}" || fail "can't enter base dir '${_BASE_DIR}'"
+    source "$1" || fail "there's an error in the playbook"
   ) || exit 1
 }
 
@@ -95,6 +102,7 @@ reset_base_dir() {
 
 # represents a block; always chdirs to the base_dir (default = current directory)
 @() {
+   _BLOCKS_STARTED=1
    _SKIP=0
    cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
    echo -e "\n\033[1;37;44m ${_NAV}: $* \033[0m"
@@ -103,7 +111,6 @@ reset_base_dir() {
 # represents a task; if the task fails, the bashible script is stopped
 # if the block has been skipped, does nothing
 -() {
-   _TASKS_STARTED=1
    if [ "${_SKIP}" != 1 ]; then
      echo -e "\033[37m - $* \033[0m"
      "$@" || fail "'$@' failed (in `pwd`)";
@@ -115,14 +122,21 @@ as() {
    local user=$1; shift
    # can't be -i (login shell) otherwise -E won't work, it would also chdir to homedir
    # PATH is usually erased by sudo, has to be preserved explicitly
-   /usr/bin/env sudo -E -u "$user" /usr/bin/env env -- PATH="$PATH" "${_BASHIBLE}" run "$@" || fail "sudo command failed (in `pwd`)"
+   /usr/bin/env sudo -E -u "$user" /usr/bin/env env -- PATH="${PATH}" _IMPORTED="${_IMPORTED}" "${_BASHIBLE}" run "$@" || fail "sudo command failed (in `pwd`)"
+}
+
+import() {
+   if ! echo "${_IMPORTED}" | grep ":$1:"; then
+      _IMPORTED="${_IMPORTED}$1:"
+      source "$1"
+   fi
 }
 
 # skip next tasks if the current hostname is not in defined
 # if called before all blocks, can skip all of them
 only_on() {
    if ! containsElement "${_HOSTNAME}" "$@"; then
-      if [ "${_TASKS_STARTED}" = 0 ]; then
+      if [ "${_BLOCKS_STARTED}" = 0 ]; then
          warn "skipping all tasks here on ${_HOSTNAME}"
          exit
       else
@@ -325,11 +339,18 @@ install_gem() {
 
 ### DO THE PROCESS ###
 
-if [ "${_SCRIPT}" != _RUN ]; then
+if [ "${_PLAYBOOK}" != _SUDO_ ]; then
   # when a script passed on stdin
-  call "${_SCRIPT}"
+  call "${_PLAYBOOK}"
 else
   # when running a sudoed command
+  # but first re-import all functions
+  IFS=':'; for i in $_IMPORTED; do
+     echo "sourcing $i"
+     [ -n "$i" ] && source "$i"
+  done
+  IFS=' '
+  # finally run the command
   "$@"
 fi
 
