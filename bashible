@@ -70,6 +70,14 @@ warn() {
   echo -e "   \033[31m($*)\033[0m"
 }
 
+print_start() {
+    echo -e "\n\033[1;37;45m ${_NAV}: \033[1;37;44m START \033[0m"
+}
+
+print_finish() {
+    echo -e "\n\033[1;37;45m ${_NAV}: \033[1;37;44m FINISH \033[0m"
+}
+
 # use to call a bashible "playbook" instead of sourcing it
 call() {
   quiet pushd "${_BASE_DIR}" # otherwise relative paths may not work
@@ -85,8 +93,10 @@ call() {
     _ORIG_BASE_DIR="${_BASE_DIR}"
     _BLOCKS_STARTED=0
     _SKIP=0
+    print_start
     cd "${_BASE_DIR}" || fail "can't enter base dir '${_BASE_DIR}'"
     source "$1" || fail "there's an error in the playbook"
+    print_finish
   ) || exit 1
 }
 
@@ -105,7 +115,7 @@ reset_base_dir() {
    _BLOCKS_STARTED=1
    _SKIP=0
    cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
-   echo -e "\n\033[1;37;44m ${_NAV}: $* \033[0m"
+   echo -e "\n\033[1;37;45m ${_NAV} \033[1;37;44m $* \033[0m"
 }
 
 # represents a task; if the task fails, the bashible script is stopped
@@ -181,6 +191,7 @@ not() {
 
 stop() {
   info "stopping execution of the script"
+  print_finish
   exit 0
 }
 
