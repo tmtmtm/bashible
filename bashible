@@ -148,7 +148,7 @@ only_on() {
    if ! containsElement "${_HOSTNAME}" "$@"; then
       if [ "${_BLOCKS_STARTED}" = 0 ]; then
          warn "skipping all tasks here on ${_HOSTNAME}"
-         exit
+         stop
       else
          warn "not on ${_HOSTNAME}, skipping"
          _SKIP=1
@@ -192,7 +192,7 @@ not() {
 stop() {
   info "stopping execution of the script"
   print_finish
-  exit 0
+  exit
 }
 
 stop_if() {
@@ -338,8 +338,9 @@ wait_for() {
   elif [ "$up" = down ]; then
      while netstat -lnt | grep "$what" | grep -q 'LISTEN'; do sleep 1; done
   else
-     fail "wait for what? '$up'"
+     fail "wait for '$up'? (expected up|down)"
   fi
+  return 0
 }
 
 ### DO THE PROCESS ###
