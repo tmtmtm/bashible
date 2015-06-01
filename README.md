@@ -1,10 +1,10 @@
 # BASHIBLE
 
-Bashible is a deployment/automation tool inspired by Ansible playbooks, but written in Bash and simplified.
+Bashible is a deployment/automation tool inspired by Ansible playbooks, but written in Bash and simplified. You can consider it as a bash script on steroids.
 
-Typical use case? Installing & running a complete application on a freshly installed VM.
+Typical usage? Provisioning a machine.
 
-### Example playbook: install Redis from sources
+### Example blebook: install Redis from sources
 
 ```bash
 @ Install prerequisities
@@ -49,17 +49,17 @@ Tools like Puppet, Chef or Ansible are sometimes too heavy for simple things. If
 ## => How does it work?
 
   - The only dependency of bashible is the Bash.
-  - Bashible playbook is a bash script. Even "-" and "@" are bash functions.
-  - In a playbook, there are blocks starting with "@" and tasks starting with "-".
+  - Bashible blebook is a bash script. Even "-" and "@" are bash functions.
+  - In a blebook, there are blocks starting with "@" and tasks starting with "-".
   - Blocks have two purposes:
        - skipping tasks that already have been done
-       - the current working directory of each block starts in the same directory as the playbook resides, unless you explicitly specify elsewhere
-  - If a task fails, the complete run of the playbook fails.
-  - You can use environment variables to modify the run of a playbook (skip tasks, etc.)
-  - You can call another playbook(s) from a playbook (like dependencies), moreover bashible doesn't call the same playbook twice if it is called in an inherited playbook, too.
+       - the current working directory of each block starts in the same directory as the blebook resides, unless you explicitly specify elsewhere
+  - If a task fails, the complete run of the blebook fails.
+  - You can use environment variables to modify the run of a blebook (skip tasks, etc.)
+  - You can call another blebook(s) from a blebook (like dependencies), moreover bashible doesn't call the same blebook twice if it is called in an inherited blebook, too.
   - Bashible implements helper functions to simplify common tasks (e.g. adding lines to files, commenting lines in files, etc.)
   - You can use your helpers by sourcing functions or changing PATH to use commands from a directory.
-  - A change of environment variables in an inherrited playbook doesn't affect it's parent.
+  - A change of environment variables in an inherrited blebook doesn't affect it's parent.
   - Finally, you can use a bash code if you need something special :-)
 
 
@@ -84,30 +84,30 @@ The project is very young, but is already used for automatic installation of an 
 
 ### FAQ
 
-##### How to run a playbook a different user? (sudo)
-If you want to run the whole playbook as another user, then either run bashible via sudo, 
+##### How to run a blebook a different user? (sudo)
+If you want to run the whole blebook as another user, then either run bashible via sudo, 
 ```bash
-sudo -u user1 bashible playbook.ble
+sudo -u user1 bashible blebook.ble
 ``` 
-or inside a playbook use "as" helper, 
+or inside a blebook use "as" helper, 
 ```bash
  - as user1 command... 
 ```
-or call a playbook from a playbook the same way,
+or call a blebook from a blebook the same way,
 ```bash
-as user1 call './another_playbook.ble'
+as user1 call './another_blebook.ble'
 ```
 
 note: The "as" helper does sudo in non-login shell mode, does preserve only PATH environment variable. 
       Depends on your sudoers file, if all used environment variables will be passed to the sudoed command. The environment cleanup is, for instance, a reason why bashible re-runs itself and doesn't just export all it's functions.
       Will be fixed in the future (see TODO).
 
-##### How to call a playbook from a playbook?
+##### How to call a blebook from a blebook?
 
 ```bash
-call '/another/path/to/playbook.ble'
+call '/another/path/to/blebook.ble'
 ```
-The working directory of the called playbook will be set to the same directory as the playbook's resides in, but won't affect later commands in the calling playbook.
+The working directory of the called blebook will be set to the same directory as the blebook's resides in, but won't affect later commands in the calling blebook.
 
 ##### How to skip tasks which have been already done?
 
@@ -135,10 +135,10 @@ or the same using "already_if" helper
 ```
 (the first argument of the "when" helper is evaluated as a bash)
 
-##### How to check if a playbook is executed under a certain user?
+##### How to check if a blebook is executed under a certain user?
 
 ```bash
-unless 'test $USER = user1' fail "only user1 can run this playbook"
+unless 'test $USER = user1' fail "only user1 can run this blebook"
 ```
 
 ##### How to use more complicated bash code as a task?
@@ -150,7 +150,7 @@ unless 'test $USER = user1' fail "only user1 can run this playbook"
 ```bash
 import /etc/my/functions.sh
 ```
-note: using "source" is not sufficient; sourced functions are not populated into child processes (when another playbooks are called from the parent one), also are not usable after sudo which usually cleans environment variables (so even if functions have been exported).
+note: using "source" is not sufficient; sourced functions are not populated into child processes (when another blebooks are called from the parent one), also are not usable after sudo which usually cleans environment variables (so even if functions have been exported).
 
 TODO
 

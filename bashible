@@ -6,7 +6,7 @@ IFS=','; _TAGS=($TAGS); IFS=' '  # when TAGS env is used (see "tag" helper)
 _HOSTNAME=`hostname`
 _BLOCKS_STARTED=0     # zero before any block started
 _SKIP=0               # skipping mode? reseted on next block
-_PLAYBOOK=''            # script to be executed
+_BLEBOOK=''            # script to be executed
 _BASE_DIR=''          # current base dir for blocks in a playbook
 _ORIG_BASE_DIR=''     # orig base dir when a playbook has been called
 _CALLED=''            # already called playbooks
@@ -22,7 +22,7 @@ help() {
 if [ "$1" = "run" ]; then
 
   # when called internally to run a sudoed command
-  _PLAYBOOK=_SUDO_
+  _BLEBOOK=_SUDO_
   # _IMPORTED and PATH will be set during the command run
   shift
 
@@ -36,11 +36,11 @@ elif [ "$1" = -h -o "$1" = --help ]; then
 else
 
   _IMPORTED=':'         # imported files (re-sourced after sudo)
-  _PLAYBOOK="$1"
+  _BLEBOOK="$1"
 
 fi
 
-if [ -z "${_PLAYBOOK}" ]; then
+if [ -z "${_BLEBOOK}" ]; then
    help
 fi
 
@@ -330,9 +330,9 @@ install_gem() {
 
 ### DO THE PROCESS ###
 
-if [ "${_PLAYBOOK}" != _SUDO_ ]; then
+if [ "${_BLEBOOK}" != _SUDO_ ]; then
   # when a script passed on stdin
-  call "${_PLAYBOOK}"
+  call "${_BLEBOOK}"
 else
   # when running a sudoed command
   # but first re-import all functions
