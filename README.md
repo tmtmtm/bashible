@@ -2,51 +2,59 @@
 
 Bashible is a deployment/automation tool inspired by Ansible playbooks, but written in Bash and simplified. You can consider it as a bash script on steroids.
 
-Typical usage? Provisioning a machine.
-
-### Example blebook: install Redis from sources
-
-```bash
-@ Install prerequisities
-  - as root yum_install make gcc tcl rsync
-
-@ Installing redis from sources
-  - already_if which redis-server
-  - mkdir -p ~/redis
-  - cd ~/redis
-  - wget http://download.redis.io/releases/redis-3.0.1.tar.gz
-  - tar xzf redis-3.0.1.tar.gz
-  - cd redis-3.0.1
-  - make
-  - make test
-  - as root make install
-
-@ Copying redis files and fixing permissions
-  - as root rsync -lrv redis_files/ /
-  - as root chmod 755 /etc/rc.d/init.d/redis-server
-
-@ Allowing memory overcommit
-  - as root add_line "vm.overcommit_memory = 1" /etc/sysctl.conf
-  - may_fail as root sysctl vm.overcommit_memory=1
-
-@ Configuring redis service
-  - already_if test -f /etc/init.d/redis-server
-  - as root chmod u+x /etc/init.d/redis-server
-  - as root chkconfig --add redis-server
-  - as root chkconfig --level 345 redis-server on
-
-@ Starting redis
-  - as root service redis-server start
-```
-
-then you would run `bashible redis.ble`, but this is just an example. 
-
-Really working examples will be packed withing the project later.
-
 ## Why?
+
 Tools like Puppet, Chef or Ansible are sometimes too heavy for simple things. If you are in a hurry, there's no time to write multiple lines of code to achieve just a copy of a single file. On the other hand, without any tools, shell scripts tend to become difficult to read and usually they are also full of unhandled failures.
 
-## => How does it work?
+## Example
+
+An example blebook:
+
+```bash
+@ Adding user foo and his public key
+  - may_fail useradd foo
+  - add_line "$PUBLIC_KEY" /home/foo/.ssh/authorized_keys
+
+@ Running bundle install
+  - cd /var/www
+  - as foo bundle install
+
+@ Install nginx unless already
+  - already_if test -x /usr/sbin/nginx
+  - apt-get install nginx
+  - rsync -av /adm/config/webserver/ /
+```
+
+The very same in Bash:
+
+```bash
+basedir=`dirname $(readlink -f "$0")`
+
+cd "$basedir" || { echo "can't chdir"; exit 1; }
+echo "Adding user foo and his public key"
+useradd foo
+if ! grep "$PUBLIC_KEY" /home/foo/.ssh/authorized_keys; then
+   echo "$PUBLIC_KEY" >> /home/foo/.ssh/authorized_keys || { echo "can't edit file"; exit 1; }
+fi
+
+cd "$basedir" || { echo "can't chdir"; exit 1; }
+echo "Running bundle install"
+cd /var/www || { echo "can't chdir"; exit 1; }
+sudo -u foo bundle install || { echo "can't bundle install"; exit 1; }
+
+cd "$basedir" || { echo "can't chdir"; exit 1; }
+if [ ! -x /usr/sbin/nginx ]; then
+  echo "Installing nginx unless already"
+  apt-get install nginx || { echo "apt get failed"; exit 1; }
+  echo "Installing default vhosts.d contents unless already"
+  rsync -av /adm/config/webserver/ / || { echo "rsync failed"; exit 1; }
+fi
+```
+
+`bashible blebook.ble` would then run the blebook, but it is just an example. Really working examples will come later.
+
+
+## How does it work?
 
   - The only dependency of bashible is the Bash.
   - Bashible blebook is a bash script. Even "-" and "@" are bash functions.
