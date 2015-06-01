@@ -23,6 +23,10 @@ An example blebook:
   - already_if test -x /usr/sbin/nginx
   - apt-get install nginx
   - rsync -av /adm/config/webserver/ /
+
+@ Start nginx and ensure it is running
+  - service nginx start
+  - timeout 20 wait_for 10.0.3.188:80 up
 ```
 
 The very same in Bash:
@@ -49,6 +53,14 @@ if [ ! -x /usr/sbin/nginx ]; then
   echo "Installing default vhosts.d contents unless already"
   rsync -av /adm/config/webserver/ / || { echo "rsync failed"; exit 1; }
 fi
+
+echo "Start nginx and ensure it is running"
+service start nginx
+timeout 20 bash -c '
+  while ! netstat -ltn | grep LISTEN | grep 10.0.3.188:80; do
+    sleep 1; 
+  done
+'
 ```
 
 `bashible blebook.ble` would then run the blebook, but it is just an example. Really working examples will come later.

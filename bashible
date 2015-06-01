@@ -328,6 +328,20 @@ install_gem() {
    done
 }
 
+# wait_for 10.0.3.188:80 up
+# wait_for 10.0.3.188:80 down
+wait_for() {
+  what="$1"
+  up="$2"
+  if [ "$up" = up ]; then
+     while ! netstat -lnt | grep "$what" | grep -q 'LISTEN'; do sleep 1; done
+  elif [ "$up" = down ]; then
+     while netstat -lnt | grep "$what" | grep -q 'LISTEN'; do sleep 1; done
+  else
+     fail "wait for what? '$up'"
+  fi
+}
+
 ### DO THE PROCESS ###
 
 if [ "${_BLEBOOK}" != _SUDO_ ]; then
