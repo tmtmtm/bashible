@@ -1,12 +1,12 @@
 #!/bin/bash
 
-IFS=' '
 _BASHIBLE="$0"        # the bashible script itself
-IFS=','; _TAGS=($TAGS); IFS=' '  # when TAGS env is used (see "tag" helper)
+IFS=','; _TAGS=($TAGS);  # when TAGS env is used (see "tag" helper)
+IFS=$' \t\n'
 _HOSTNAME=`hostname`
 _BLOCKS_STARTED=0     # zero before any block started
 _SKIP=0               # skipping mode? reseted on next block
-_BLEBOOK=''            # script to be executed
+_BLEBOOK=''           # script to be executed
 _BASE_DIR=''          # current base dir for blocks in a playbook
 _ORIG_BASE_DIR=''     # orig base dir when a playbook has been called
 _CALLED=''            # already called playbooks
@@ -79,11 +79,15 @@ print_finish() {
 }
 
 # use to call a bashible "playbook" instead of sourcing it
+# by default, calls only once unless forced
+# call './foo.ble' [force]
 call() {
-  quiet pushd "${_BASE_DIR}" # otherwise relative paths may not work
   local path=`readlink -e "$1"`
-  quiet popd
-  if echo "${_CALLED}" | grep -q "$path"; then
+  if [ -z "$path" ]; then
+    fail "is the path of call '$1' correct at that place? (got empty path on readlink)"
+  fi
+  if [ "$2" != force ] && echo "${_CALLED}" | grep -q "$path"; then
+    # called already
     return
   fi
   _CALLED="${_CALLED}:$path"
@@ -95,7 +99,7 @@ call() {
     _SKIP=0
     print_start
     cd "${_BASE_DIR}" || fail "can't enter base dir '${_BASE_DIR}'"
-    source "$1" || fail "there's an error in the playbook"
+    source ./`basename "$1"` || fail "there's an error in the playbook"
     print_finish
   ) || exit 1
 }
