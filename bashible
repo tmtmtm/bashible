@@ -19,7 +19,7 @@ help() {
   exit 1
 }
 
-if [ "$1" = "run" ]; then
+if [ "$1" = "--" ]; then
 
   # when called internally to run a sudoed command
   _BLEBOOK=_SUDO_
@@ -132,7 +132,7 @@ as() {
    local user=$1; shift
    # can't be -i (login shell) otherwise -E won't work, it would also chdir to homedir
    # PATH is usually erased by sudo, has to be preserved explicitly
-   /usr/bin/env sudo -E -u "$user" /usr/bin/env env -- PATH="${PATH}" _IMPORTED="${_IMPORTED}" "${_BASHIBLE}" run "$@" || fail "sudo command failed (in `pwd`)"
+   /usr/bin/env sudo -E -u "$user" /usr/bin/env env -- PATH="${PATH}" _IMPORTED="${_IMPORTED}" "${_BASHIBLE}" -- "$@" || fail "sudo command failed (in `pwd`)"
 }
 
 import() {
@@ -302,6 +302,13 @@ is_rpm_installed() {
       fi
    done
    return 1
+}
+
+timeout() {
+   time=$1; shift
+   if ! /usr/bin/env timeout "$time" "${_BASHIBLE}" -- "$@"; then
+      fail "timeout expired"
+   fi
 }
 
 yum_install() {
