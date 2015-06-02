@@ -229,8 +229,8 @@ skip_if() {
 
 ### USEFUL HELPERS ###
 
-is_set() {
-   [ -n "`eval echo "$""$1"`" ]
+is_empty() {
+   [ -z "`eval echo "$""$1"`" ]
 }
 
 symlink() {
