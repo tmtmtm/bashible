@@ -82,7 +82,7 @@ print_finish() {
 # by default, calls only once unless forced
 # call './foo.ble' [force]
 call() {
-  local path=`readlink -e "$1"`
+  local path=`readlink -e "$1"` # get absolute path
   if [ -z "$path" ]; then
     fail "is the path of call '$1' correct at that place? (got empty path on readlink)"
   fi
@@ -106,9 +106,13 @@ call() {
 
 # set base dir (will be chdired to it on each @ block)
 base_dir() {
-  mkdir -p $1 || fail "can't create base dir"
-  _BASE_DIR=$1
+  _BASE_DIR=`readlink -e "$1"` # get absolute path
+  if [ -z "${_BASE_DIR}" ]; then
+    fail "base_dir: readlink -e '$1' failed"
+  fi
+  mkdir -p "${_BASE_DIR}" || fail "can't create base dir"
 }
+
 
 reset_base_dir() {
   _BASE_DIR="${_ORIG_BASE_DIR}"
