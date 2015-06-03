@@ -1,27 +1,29 @@
 # BASHIBLE
 
-Bashible is a deployment/automation tool inspired by Ansible playbooks, but written in Bash and simplified. You can consider it as a bash script on steroids.
+Bashible is a deployment/automation tool written in Bash, inspired by Ansible. 
+
+Bashible blebook is just a better readable bash script.
 
 ## Why?
 
-Tools like Puppet, Chef or Ansible are sometimes too heavy for simple things. If you are in a hurry, there's no time to write multiple lines of code to achieve just a copy of a single file. On the other hand, without any tools, shell scripts tend to become difficult to read and usually they are also full of unhandled failures.
+Tools like Puppet, Chef or Ansible are sometimes too heavy to do simple things. If you are in a hurry, there's no time to write multiple lines of code to achieve just a copy of a single file. On the other hand, without any tools, shell scripts tend to become difficult to read and usually they are also full of unhandled failures.
 
 ## Example
 
 An example blebook:
 
 ```bash
-@ Adding user foo and his public key
-  - may_fail useradd foo
-  - add_line "$PUBLIC_KEY" /home/foo/.ssh/authorized_keys
+@ Adding user webuser and his public key
+  - may_fail useradd webuser
+  - add_line "$PUBLIC_KEY" /home/webuser/.ssh/authorized_keys
 
 @ Running bundle install
   - cd /var/www
-  - as foo bundle install
+  - as webuser bundle install
 
 @ Install nginx unless already
   - already_if test -x /usr/sbin/nginx
-  - apt-get install nginx
+  - yum_install nginx
   - rsync -av /adm/config/webserver/ /
 
 @ Start nginx and ensure it is running
@@ -35,21 +37,21 @@ The very same in Bash:
 basedir=`dirname $(readlink -f "$0")`
 
 cd "$basedir" || { echo "can't chdir"; exit 1; }
-echo "Adding user foo and his public key"
-useradd foo
-if ! grep "$PUBLIC_KEY" /home/foo/.ssh/authorized_keys; then
-   echo "$PUBLIC_KEY" >> /home/foo/.ssh/authorized_keys || { echo "can't edit file"; exit 1; }
+echo "Adding user webuser and his public key"
+useradd webuser
+if ! grep "$PUBLIC_KEY" /home/webuser/.ssh/authorized_keys; then
+   echo "$PUBLIC_KEY" >> /home/webuser/.ssh/authorized_keys || { echo "can't edit file"; exit 1; }
 fi
 
 cd "$basedir" || { echo "can't chdir"; exit 1; }
 echo "Running bundle install"
 cd /var/www || { echo "can't chdir"; exit 1; }
-sudo -u foo bundle install || { echo "can't bundle install"; exit 1; }
+sudo -u webuser bundle install || { echo "can't bundle install"; exit 1; }
 
 cd "$basedir" || { echo "can't chdir"; exit 1; }
 if [ ! -x /usr/sbin/nginx ]; then
   echo "Installing nginx unless already"
-  apt-get install nginx || { echo "apt get failed"; exit 1; }
+  yum install -y nginx || { echo "yum failed"; exit 1; }
   echo "Installing default vhosts.d contents unless already"
   rsync -av /adm/config/webserver/ / || { echo "rsync failed"; exit 1; }
 fi
@@ -65,42 +67,433 @@ timeout 20 bash -c '
 
 `bashible blebook.ble` would then run the blebook, but it is just an example. Really working examples will come later.
 
+## Install & usage
+
+```bash
+ cd /usr/local/bin
+ wget https://raw.githubusercontent.com/mig1984/bashible/master/bashible
+ chmod 755 bashible
+```
+
+ then
+
+```bash
+ bashible your-blebook.ble
+```
 
 ## How does it work?
 
-  - The only dependency of bashible is the Bash.
-  - Bashible blebook is a bash script. Even "-" and "@" are bash functions.
-  - In a blebook, there are blocks starting with "@" and tasks starting with "-".
+  - Bashible blebook is just a better readable bash script.
+  - There are blocks **"@ A comment..."** and tasks **"- command ..."**
   - Blocks have two purposes:
-       - skipping tasks that already have been done
-       - the current working directory of each block starts in the same directory as the blebook resides, unless you explicitly specify elsewhere
-  - If a task fails, the complete run of the blebook fails.
-  - You can use environment variables to modify the run of a blebook (skip tasks, etc.)
-  - You can call another blebook(s) from a blebook (like dependencies), moreover bashible doesn't call the same blebook twice if it is called in an inherited blebook, too.
-  - Bashible implements helper functions to simplify common tasks (e.g. adding lines to files, commenting lines in files, etc.)
-  - You can use your helpers by sourcing functions or changing PATH to use commands from a directory.
-  - A change of environment variables in an inherrited blebook doesn't affect it's parent.
-  - Finally, you can use a bash code if you need something special :-)
+     - **skipping tasks** that already have been done
+     - the **working directory** of each block starts in the same directory as the blebook resides, unless you explicitly specify elsewhere
+  - If a **task fails** => the complete run of the **blebook fails**.
+  - You can use **environment variables** to modify the run of a blebook (skip tasks, etc.)
+  - You can **call** another blebook(s) from a blebook (like dependencies), moreover bashible doesn't call the same blebook twice (unless forced).
+  - Bashible implements **helper functions** to simplify common tasks (e.g. adding lines to files, commenting lines in files, etc.)
+  - You can use your **own helpers** (importing functions).
+  - Finally, you can use a bash code if you need something special.
+
+  At the moment it is used on Linux (Centos) only. May not work on other platforms (sed, netstat, etc. may behave differently elsewhere).
+
+  Suggestions and patches are welcome! :-)
 
 
-### What BASHIBLE does not (and won't do)?
+### Description of core functions
 
-Re-implement The World. 
+##### already
 
-For instance, there are beautiful tools to run bashible scripts remotely: ssh, rsync, or pdsh. Therefore bashible doesn't either re-implement the remote access or maintain a database of hosts.
+a) If used before tasks started, stops execution of the blebook (exits the process like "stop").
 
-Bashible is not perfect. For instance, there is a helper "user_add" for adding users. It adds an user and skips it if the user has been added already. But the helper doesn't modify the user later when you decide to change it's group or id. Maybe even the user_add helper is too much and will be removed in the future. So, the bashible is very suitable for new installations on fresh machines, but not for later updating (Chef or Puppet would better take care of the system state; installed packages's versions, updates, etc.)
+```bash
+when 'var_is_empty ENVIRONMENT' already
+```
 
-Bashible doesn't run on all platforms. It would be great to have a helper "install_package" which will internally call yum on Centos, apt-get on Debian - but - why? In the end, the bashible script could also be 1MB big... Fortunatelly there is a possibility to extend it by sourcing your own functions.
+b) If used inside a tasks block, skips following tasks up to the next block.
 
-### TODO
+```bash
+@ Installing nginx unless already
+  - when 'test -x /usr/sbin/nginx' already
+  - yum install nginx
+```
 
-Write a description of each core function and each helper. Create a set of working examples. Create a typical use case example. Write FAQ. Stabilize functions. Better sudo implementation (if possible? e.g. use chpst instead - if found, etc.); extract env (PATH and _IMPORTED in the top of the script instead of using /usr/bin/env - use _PRESERVE_ENV and "preserve" instead of "export")
- => Release version 1.0.
+note: does the same as the "skip", but outputs a different message
 
-### Suggestions and patches are welcome!
+##### already_if COMMAND ...
 
-The project is very young, but is already used for automatic installation of an application on a remote machine. 
+Runs the command and if it results in true, calls "already"
+
+a) before task blocks started
+
+```bash
+already_if var_is_empty ENVIRONMENT
+```
+
+b) inside a tasks block
+
+```bash
+@ Installing nginx unless already
+  - already_if test -x /usr/sbin/nginx
+  - yum install nginx
+```
+
+
+##### as USER COMMAND ...
+
+Run the command as the user. Sudo in non-login shell mode is used (the current working dir should be preserved).
+
+notice: only some environment variables are copied to the sudoed command (e.g. PATH), other depends on your sudoers config (the sudo may clear the environment).
+
+```bash
+@ Installing dependencies of rails app
+  - cd /home/rails
+  - as www-data bundle install
+```
+
+##### base_dir PATH
+
+Change a base working directory. On each tasks block the working directory is (re)set to the base directory.
+Unless set, defaults to the same directory as the blebook resides in.
+
+The reset_base_dir resets it to the default.
+
+```bash
+base_dir "/home/user1"
+
+@ Doing something in /home/user1
+- foo
+- bar
+
+...
+
+reset_base_dir
+```
+
+##### call PATH [force]
+
+Call another blebook. It will run in a new process, therefore it won't affect the caller anyhow.
+The working directory of the called blebook is set to the same directory as the blebook file resides in.
+The "call" is used also for the top blebook.
+
+Unless you specify "force", the same blebook won't run again if already run in a parent.
+
+```bash
+call "./another-blebook.ble"
+```
+
+
+##### fail MESSAGE
+
+Interrupts execution with a message displayed in red on stdout.
+
+```bash
+- when 'var_is_empty SERVERNAME' fail "variable SERVERNAME must be set"
+```
+
+##### info MESSAGE
+
+Prints info message to stdout.
+
+```bash
+info "foobar"
+```
+
+##### import PATH
+
+Use "import" instead of "source". It does the same, but remembers imported files. When a command is run using sudo, all files will be re-sourced
+(otherwise functions won't be reachable in the child process).
+
+```bash
+import '/usr/local/share/mylib.sh'
+```
+
+##### only_on HOST HOST ...
+
+a) If used before task blocks, stops execution of the blebook unless it is not run on one of specified hosts (only_on).
+
+```bash
+only_on web123
+```
+
+b) If used inside a task block, skips following tasks unless it is not run on one of specified hosts (only_on).
+
+```bash
+@ Installing nginx
+  - only_on web123 web125 web126
+  - ...
+```
+
+The "not_on" does the opposite.
+
+##### not COMMAND ...
+
+Runs the command and negate it's exit status.
+
+```bash
+@ Doing cleanup
+  - already_if not test -f '/tmp/foobar'
+```
+
+(or use "when" or "unless" with an exclamation mark)
+
+##### not_on HOST HOST ...
+
+see the "only_on" above (does the opposite)
+
+##### may_fail COMMAND ...
+
+Normally if a command fails, execution of a blebook is stopped.
+Sometimes tasks may fail and it doesn't matter.
+
+```bash
+@ Cleaning up
+  - may_fail rmdir /home
+  - may_fail rmdir /var
+```
+
+##### quiet COMMAND ...
+
+Runs the command with output directed to /dev/null.
+
+```bash
+- when 'quiet grep centos /etc/hosts' already
+```
+
+##### reset_base_dir
+
+see the "base_dir" above
+
+##### skip
+
+a) if used before all task blocks started, stops execution of the blebook
+
+```bash
+when 'var_is_empty ENVIRONMENT' skip
+```
+
+b) skips following tasks up to a next block
+
+```bash
+when 'var_is_empty ENVIRONMENT' skip
+```
+
+note: does the same like the "already", but outputs a different message
+
+##### skip_if COMMAND ...
+
+Runs the command and if it results in true, calls "skip"
+
+a) before task blocks started
+
+```bash
+skip_if var_is_empty ENVIRONMENT
+```
+
+b) inside a tasks block
+
+```bash
+@ Installing nginx unless already
+  - skip_if test -x /usr/sbin/nginx
+  - yum install nginx
+```
+
+##### stop
+
+Stops execution of the blebook with a message (exits the process).
+
+```bash
+when 'var_is_empty ENVIRONMENT' stop
+```
+
+##### stop_if COMMAND ...
+
+Runs the command and if it results in true, calls "stop".
+
+```bash
+stop_if var_is_empty ENVIRONMENT
+stop_if not test -d /etc/nginx
+```
+
+
+##### tag TAG
+
+If a blebook is run with TAGS environment variable set (tag words separated by a comma),
+
+a) before task blocks started, stops execution of the blebook unless TAG is found among specified tags.
+
+```bash
+tag install deploy
+```
+
+b) inside a task block, skips following tasks unless TAG is found among specified tags.
+
+```bash
+@ Installing nginx
+  - tag install
+  - ...
+```
+
+##### unless 'EVALUATED STRING' COMMAND ...
+
+see the "when" below (does the opposite)
+
+##### warn MESSAGE
+
+Prints warn message to stdout.
+
+```bash
+info "foobar"
+```
+
+##### when 'EVALUATED STRING' COMMAND ...
+
+Runs the command if the evaluated string returns true ("when") or false ("unless").
+
+```bash
+when 'var_is_empty ENVIRONMENT' fail 'ENVIRONMENT variable is not set!'
+unless '! var_is_empty ENVIRONMENT' fail 'ENVIRONMENT variable is not set!'
+
+@ Installing nginx unless already
+  - when 'test -f /etc/nginx/nginx.conf' already
+  - unless '! test -f /etc/nginx/nginx.conf' already
+```
+
+You can write more complex expressions,
+
+```bash
+when 'test -d /etc/nginx && test -d /var/www' skip
+```
+
+
+### Description of other functions
+
+##### add_line LINE FILE
+
+Add a line into the file (path) unless the line has been found already (somewhere in the file).
+
+```bash
+add_line 'UseDNS no;' /etc/ssh/sshd_config
+```
+
+##### append_line LINE FILE
+
+Append a line into the file (path) unless the line has been found in the end already.
+
+```bash
+append_line 'UseDNS no;' /etc/ssh/sshd_config
+```
+
+##### comment_line_matching REGEXP FILE
+
+Prefix matching line(s) by '#' in the file.
+
+```bash
+comment_line_matching 'UseDNS' /etc/ssh/sshd_config
+```
+
+##### install_gem NAME NAME ...
+
+Install ruby gems unless already (the check is quick).
+
+```bash
+@ Installing application prerequisities
+  - install_gem celluloid cuba sequel
+```
+
+##### is_rpm_installed NAME
+
+Returns true if the rpm is installed.
+
+```bash
+when '! is_rpm_installed nginx' fail 'nginx RPM is not installed'
+```
+
+##### prepend_line LINE FILE
+
+Prepend the file with a line unless already.
+
+```bash
+prepend_line 'UseDNS no;' /etc/ssh/sshd_config
+```
+
+##### prepend_line LINE FILE
+
+Prepend the file with a line unless already.
+
+```bash
+prepend_line 'UseDNS no;' /etc/ssh/sshd_config
+```
+
+##### remove_line_matching REGEX FILE
+
+Remove line(s) matching regexp from the file.
+
+```bash
+remove_line_matching 'UseDNS' /etc/ssh/sshd_config
+```
+
+##### replace_matching REGEXP STRING FILE
+
+Replace matching regexps in the file with the string.
+
+```bash
+replace_matching 'enabled=0' 'enabled=1' /etc/default/foo.cfg
+```
+
+##### symlink SRC DEST
+
+Creates a symbolic link from SRC to DEST unless already.
+
+```bash
+symlink '/usr/local/bin/redis' '/usr/bin/redis'
+```
+
+##### timeout SECS COMMAND ...
+
+Runs the command but fails if it lasts more than SECS.
+
+```bash
+@ Start nginx service
+  - service nginx start
+  - timeout 20 wait_for_tcp 127.0.0.1:80 up
+```
+
+##### var_is_empty VARNAME
+
+Results true if the env variable VARNAME is empty.
+
+```bash
+when 'var_is_empty ENVIRONMENT' fail 'ENVIRONMENT variable must be set'
+```
+
+##### uncomment_line_matching REGEXP FILE
+
+Removes '#' from the beginning of matching line(s) in the file.
+
+```bash
+uncomment_line_matching 'UseDNS' /etc/ssh/sshd_config
+```
+
+##### wait_for_tcp MATCH up|down
+
+Waits for a listening tcp service to be up or down. Uses "netstat -ltn".
+
+```bash
+@ Stop nginx service
+  - service nginx stop
+  - timeout 20 wait_for_tcp 127.0.0.1:80 down
+```
+
+##### yum_install NAME NAME ...
+
+Installs the specified software unless already (the check is quick).
+
+```bash
+@ Installing prerequisities
+  - yum_install rsync vsftpd nginx
+```
+
 
 ### FAQ
 
@@ -120,7 +513,7 @@ as user1 call './another_blebook.ble'
 
 note: The "as" helper does sudo in non-login shell mode, does preserve only PATH environment variable. 
       Depends on your sudoers file, if all used environment variables will be passed to the sudoed command. The environment cleanup is, for instance, a reason why bashible re-runs itself and doesn't just export all it's functions.
-      Will be fixed in the future (see TODO).
+      Will be fixed in the future (see TODO.txt).
 
 ##### How to call a blebook from a blebook?
 
@@ -163,7 +556,7 @@ unless 'test $USER = user1' fail "only user1 can run this blebook"
 
 ##### How to use more complicated bash code as a task?
 ```bash
-- eval 'foo bar baz'
+- already_if eval 'foo bar baz'
 ```
 
 ##### How to extend bashible with my own functions (helpers)?
@@ -172,8 +565,17 @@ import /etc/my/functions.sh
 ```
 note: using "source" is not sufficient; sourced functions are not populated into child processes (when another blebooks are called from the parent one), also are not usable after sudo which usually cleans environment variables (so even if functions have been exported).
 
-TODO
+##### How to set a variable depending on a task beeing executed?
 
-### Description of core functions
+use "export",
 
-TODO
+```bash
+@ Installing nginx unless already
+  - already_if test -d /etc/nginx
+  - yum install nginx
+  - export NGINX_INSTALLED=1
+
+@ Configuring nginx if freshly installed
+  - skip_if 'var_is_empty NGINX_INSTALLED'
+  - cp -a /defaults/nginx/* /etc/nginx/
+```
