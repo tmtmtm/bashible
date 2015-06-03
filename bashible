@@ -2,7 +2,7 @@
 
 _BASHIBLE="$0"        # the bashible script itself
 IFS=','; _TAGS=($TAGS);  # when TAGS env is used (see "tag" helper)
-IFS=$' \t\n'
+IFS=$' \t\n'          # bashible's default IFS
 _HOSTNAME=`hostname`
 _BLOCKS_STARTED=0     # zero before any block started
 _SKIP=0               # skipping mode? reseted on next block
@@ -411,7 +411,7 @@ else
   IFS=':'; for i in $_IMPORTED; do
      [ -n "$i" ] && source "$i"
   done
-  IFS=' '
+  IFS=$' \t\n'
   # finally run the command
   "$@"
 fi

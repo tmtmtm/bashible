@@ -2,11 +2,11 @@
 
 Bashible is a deployment/automation tool written in Bash, inspired by Ansible. 
 
-Bashible blebook is just a better readable bash script.
+Bashible blebook is a better readable bash script.
 
 ## Why?
 
-Tools like Puppet, Chef or Ansible are sometimes too heavy to do simple things. If you are in a hurry, there's no time to write multiple lines of code to achieve just a copy of a single file. On the other hand, without any tools, shell scripts tend to become difficult to read and usually they are also full of unhandled failures.
+Tools like Puppet, Chef or Ansible are sometimes too heavy to do simple things. If you are in a hurry, there's no time to write multiple lines of code to achieve a copy of a single file. On the other hand, without any tools, shell scripts tend to become difficult to read and usually they are also full of unhandled failures.
 
 ## Example
 
@@ -83,7 +83,7 @@ timeout 20 bash -c '
 
 ## How does it work?
 
-  - Bashible blebook is just a better readable bash script.
+  - Bashible blebook is a better readable bash script.
   - There are blocks **"@ A comment..."** and tasks **"- command ..."**
   - Blocks have two purposes:
      - **skipping tasks** that already have been done
