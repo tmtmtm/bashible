@@ -23,7 +23,7 @@ if [ "$1" = "--" ]; then
 
   # when called internally to run a sudoed command
   _BLEBOOK=_SUDO_
-  # _IMPORTED and PATH will be set during the command run
+  # _IMPORTED and PATH variables are parts of the command
   shift
 
   # now it will parse all functions below and then run the command 
@@ -71,11 +71,19 @@ warn() {
 }
 
 print_start() {
-    echo -e "\n\033[1;37;45m ${_NAV}: \033[1;37;44m START \033[0m"
+    echo -e "\n\033[1;37;45m ${_NAV} \033[1;37;44m START \033[0m"
+}
+
+print_block() {
+    echo -e "\n\033[1;37;45m ${_NAV} \033[1;37;44m $* \033[0m"
 }
 
 print_finish() {
-    echo -e "\n\033[1;37;45m ${_NAV}: \033[1;37;44m FINISH \033[0m"
+    echo -e "\n\033[1;37;45m ${_NAV} \033[1;37;44m FINISH \033[0m"
+}
+
+print_task() {
+    echo -e "\033[37m - $* \033[0m"
 }
 
 # use to call a bashible "playbook" instead of sourcing it
@@ -123,14 +131,14 @@ reset_base_dir() {
    _BLOCKS_STARTED=1
    _SKIP=0
    cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
-   echo -e "\n\033[1;37;45m ${_NAV} \033[1;37;44m $* \033[0m"
+   print_block $*
 }
 
 # represents a task; if the task fails, the bashible script is stopped
 # if the block has been skipped, does nothing
 -() {
    if [ "${_SKIP}" != 1 ]; then
-     echo -e "\033[37m - $* \033[0m"
+     print_task $*
      "$@" || fail "'$@' failed (in `pwd`)";
    fi
 }
@@ -343,9 +351,9 @@ install_gem() {
    done
 }
 
-# wait_for 10.0.3.188:80 up
-# wait_for 10.0.3.188:80 down
-wait_for() {
+# wait_for_tcp 10.0.3.188:80 up
+# wait_for_tcp 10.0.3.188:80 down
+wait_for_tcp() {
   what="$1"
   up="$2"
   if [ "$up" = up ]; then
@@ -367,7 +375,6 @@ else
   # when running a sudoed command
   # but first re-import all functions
   IFS=':'; for i in $_IMPORTED; do
-     echo "sourcing $i"
      [ -n "$i" ] && source "$i"
   done
   IFS=' '

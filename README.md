@@ -26,7 +26,7 @@ An example blebook:
 
 @ Start nginx and ensure it is running
   - service nginx start
-  - timeout 20 wait_for 10.0.3.188:80 up
+  - timeout 20 wait_for_tcp 10.0.3.188:80 up
 ```
 
 The very same in Bash:
