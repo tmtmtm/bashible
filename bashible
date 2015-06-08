@@ -14,7 +14,9 @@ _NAV=''               # navigation when calling sub-playbooks
 
 
 help() {
-  echo "usage: bashible playbook.ble"
+  echo "usage: bashible BLEBOOK.ble"
+  echo
+  echo "see also: https://github.com/mig1984/bashible"
   echo
   exit 1
 }
@@ -223,9 +225,19 @@ skip_if() {
 }
 
 stop() {
-  info "stopping execution of the script"
+  info "stopping execution of the blebook"
   print_finish
-  exit
+  exit 0
+}
+
+stop_all() {
+  info "stopping execution of the blebook and all parent blebooks"
+  print_finish
+  exit 1
+}
+
+stop_all_if() {
+  "$@" && stop_all || return 0
 }
 
 stop_if() {

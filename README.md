@@ -104,7 +104,7 @@ timeout 20 bash -c '
 
 ##### already
 
-a) If used before tasks started, stops execution of the blebook (exits the process like "stop").
+a) If used before tasks started, skips execution of all tasks in the blebook (exits the process).
 
 ```bash
 when 'var_is_empty ENVIRONMENT' already
@@ -266,7 +266,7 @@ see the "base_dir" above
 
 ##### skip
 
-a) if used before all task blocks started, stops execution of the blebook
+a) if used before all task blocks started, skips all following tasks in the blebook (exits the process)
 
 ```bash
 when 'var_is_empty ENVIRONMENT' skip
@@ -300,10 +300,18 @@ b) inside a tasks block
 
 ##### stop
 
-Stops execution of the blebook with a message (exits the process).
+Stops execution of the blebook. If called from a parent blebook, it will continue normally.
 
 ```bash
 when 'var_is_empty ENVIRONMENT' stop
+```
+
+##### stop_all
+
+Stops execution of the blebook and all parent blebooks.
+
+```bash
+when 'var_is_empty ENVIRONMENT' stop_all
 ```
 
 ##### stop_if COMMAND ...
@@ -315,6 +323,14 @@ stop_if var_is_empty ENVIRONMENT
 stop_if not test -d /etc/nginx
 ```
 
+##### stop_all_if COMMAND ...
+
+Runs the command and if it results in true, calls "stop_all".
+
+```bash
+stop_all_if var_is_empty ENVIRONMENT
+stop_all_if not test -d /etc/nginx
+```
 
 ##### tag TAG
 
