@@ -263,6 +263,18 @@ unless() {
 
 ### USEFUL HELPERS ###
 
+# write contents to an existing file
+# fails if the file is not empty and it's contents differs
+set_contents() {
+   local contents="$1"
+   local path="$2"
+   [ ! -w "$path" ] && fail "file '$path' is not writable or doesn't exist"
+   local current="` cat "$path" `"
+   [ $? != 0 ] && fail "can't read file '$path'"
+   [ -s "$path" -a "$contents" != "$current" ] && fail "file '$path' already contains something else"
+   echo "$contents" > "$path"
+}
+
 add_line() {
    local line="$1"
    local path="$2"

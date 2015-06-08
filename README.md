@@ -441,6 +441,14 @@ Replace matching regexps in the file with the string.
 replace_matching 'enabled=0' 'enabled=1' /etc/default/foo.cfg
 ```
 
+##### set_contents CONTENTS FILE
+
+If the file is empty, write the contents. If the contents is already there, does nothing. Fails, if contents is there but differs.
+
+```bash
+set_contents 'centos-local' /etc/default/hostname
+```
+
 ##### symlink SRC DEST
 
 Creates a symbolic link from SRC to DEST unless already.
