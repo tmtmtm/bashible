@@ -279,7 +279,7 @@ add_line() {
    local line="$1"
    local path="$2"
    quiet head -n 1 "$path" || fail "can't read file '$path'"
-   if ! quiet egrep -e "^ *$line" "$path"; then
+   if ! quiet grep -F "$line" "$path"; then
      echo "$line" >> "$path" || fail "can't write to file '$path'"
    else
      info "already"
