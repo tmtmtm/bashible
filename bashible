@@ -346,10 +346,18 @@ remove_line_matching() {
 
 replace_matching() {
    local match="$1"
-   local replacement="$2"
+   local replace="$2"
    local path="$3"
    [ ! -f "$path" ] && fail "file '$path' not found"
-   sed -i "s\\$match\\$replace\\" "$replacement" "$path"
+   sed -i "s\\$match\\$replace\\g" "$path"
+}
+
+replace_line_matching() {
+   local match="$1"
+   local replace="$2"
+   local path="$3"
+   [ ! -f "$path" ] && fail "file '$path' not found"
+   sed -i "s\\.*$match.*\\$replace\\g" "$path"
 }
 
 symlink() {

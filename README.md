@@ -433,6 +433,14 @@ Remove line(s) matching regexp from the file.
 remove_line_matching 'UseDNS' /etc/ssh/sshd_config
 ```
 
+##### replace_line_matching REGEXP STRING FILE
+
+Replace complete line where the matching regexp has been found.
+
+```bash
+replace_line_matching 'domain' 'domain=example.com' /etc/default/domain.cfg
+```
+
 ##### replace_matching REGEXP STRING FILE
 
 Replace matching regexps in the file with the string.
