@@ -328,7 +328,7 @@ install_gem() {
    done
 }
 
-is_rpm_installed() {
+rpm_is_installed() {
    for i in `rpm -q "$1"`; do
       version="${i##$1}"
       if echo "$version" | egrep -q -e "^-[0-9]"; then
@@ -421,7 +421,7 @@ wait_for_tcp() {
 
 yum_install() {
    while [ -n "$1" ]; do
-     if ! is_rpm_installed "$1"; then
+     if ! rpm_is_installed "$1"; then
         info "$1 seems to be not installed yet"
         yum install -y "$1" || fail "can't install $1"
      else

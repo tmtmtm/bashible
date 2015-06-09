@@ -417,12 +417,12 @@ Install ruby gems unless already (the check is quick).
   - install_gem celluloid cuba sequel
 ```
 
-##### is_rpm_installed NAME
+##### rpm_is_installed NAME
 
 Returns true if the rpm is installed.
 
 ```bash
-when '! is_rpm_installed nginx' fail 'nginx RPM is not installed'
+unless 'rpm_is_installed nginx' fail 'nginx RPM is not installed'
 ```
 
 ##### prepend_line LINE FILE
