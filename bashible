@@ -1,18 +1,17 @@
 #!/bin/bash
 
 _BASHIBLE="$0"        # the bashible script itself
-IFS=','; _TAGS=($TAGS);  # when TAGS env is used (see "tag" helper)
-IFS=$' \t\n'          # bashible's default IFS
-_HOSTNAME=`hostname`
 _BLOCKS_STARTED=0     # zero before any block started
 _SKIP=0               # skipping mode? reseted on next block
 _BLEBOOK=''           # script to be executed
 _BASE_DIR=''          # current base dir for blocks in a playbook
 _ORIG_BASE_DIR=''     # orig base dir when a playbook has been called
-_NOTIFY=`tempfile`    # will be called at the end
-_CALLED=`tempfile`    # already called playbooks
 _IS_CHILD=''          # 1 if this blebook is a sub-blebook
 _NAV=''               # navigation when calling sub-blebook(s)
+IFS=','; _TAGS=($TAGS);  # when TAGS env is used (see "tag" helper)
+IFS=$' \t\n'          # bashible's default IFS
+_HOSTNAME=`hostname`
+[ -z "${_HOSTNAME}" ] && fail "got no hostname"
 
 
 help() {
@@ -41,6 +40,10 @@ else
 
   _IMPORTED=':'         # imported files (re-sourced after sudo)
   _BLEBOOK="$1"
+  _NOTIFY=`tempfile`    # will be called at the end
+  _CALLED=`tempfile`    # already called playbooks
+  [ -z "${_CALLED}" ] && fail "can't create tempfile for _CALLED"
+  [ -z "${_NOTIFY}" ] && fail "can't create tempfile for _NOTIFY"
 
 fi
 
@@ -115,7 +118,7 @@ as() {
    local user=$1; shift
    # can't be -i (login shell) otherwise -E won't work, it would also chdir to homedir
    # PATH is usually erased by sudo, has to be preserved explicitly
-   /usr/bin/env sudo -E -u "$user" /usr/bin/env env -- PATH="${PATH}" _IMPORTED="${_IMPORTED}" "${_BASHIBLE}" -- "$@" || fail "sudo command failed (in `pwd`)"
+   /usr/bin/env sudo -E -u "$user" /usr/bin/env env -- PATH="${PATH}" _CALLED="${_CALLED}" _IMPORTED="${_IMPORTED}" _NOTIFY="${_NOTIFY}" "${_BASHIBLE}" -- "$@" || fail "sudo command failed (in `pwd`)"
 }
 
 # set base dir (will be chdired to it on each @ block)
@@ -138,7 +141,7 @@ call() {
     # called already
     return
   fi
-  echo $path >> "${_CALLED}"
+  echo $path >> "${_CALLED}" || fail "can't write to _CALLED file (${_CALLED})"
   (
     _NAV="${_NAV}/`basename $1 | sed "s/\.ble\$//" `"
     _BASE_DIR=`dirname "$path"`
@@ -196,7 +199,7 @@ not() {
 }
 
 notify_call() {
-  echo $1 >> "${_NOTIFY}"
+  echo $1 >> "${_NOTIFY}" || fail "can't write to _NOTIFY file (${_NOTIFY})"
 }
 
 # skip next tasks if the current hostname is not in defined
