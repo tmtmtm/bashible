@@ -176,7 +176,7 @@ Call another blebook. It will run in a new process, therefore it won't affect th
 The working directory of the called blebook is set to the same directory as the blebook file resides in.
 The "call" is used also for the top blebook.
 
-Unless you specify "force", the same blebook won't run again if already run in a parent.
+Unless you specify "force", the same blebook won't run again if it has been already called.
 
 ```bash
 call "./another-blebook.ble"
@@ -206,6 +206,14 @@ Use "import" instead of "source". It does the same, but remembers imported files
 
 ```bash
 import '/usr/local/share/mylib.sh'
+```
+
+##### i_am_child
+
+Return true if the currently running blebook is called from another blebook.
+
+```bash
+unless 'i_am_child' fail "This blebook can't be called directly"
 ```
 
 ##### only_on HOST HOST ...

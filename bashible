@@ -9,8 +9,9 @@ _SKIP=0               # skipping mode? reseted on next block
 _BLEBOOK=''           # script to be executed
 _BASE_DIR=''          # current base dir for blocks in a playbook
 _ORIG_BASE_DIR=''     # orig base dir when a playbook has been called
-_CALLED=''            # already called playbooks
-_NAV=''               # navigation when calling sub-playbooks
+_CALLED=`tempfile`    # already called playbooks
+_IS_CHILD=''          # 1 if this blebook is a sub-blebook
+_NAV=''               # navigation when calling sub-blebook(s)
 
 
 help() {
@@ -132,17 +133,18 @@ call() {
   if [ -z "$path" ]; then
     fail "is the path of call '$1' correct at that place? (got empty path on readlink)"
   fi
-  if [ "$2" != force ] && echo "${_CALLED}" | grep -q "$path"; then
+  if [ "$2" != force ] && grep -q "$path" "${_CALLED}"; then
     # called already
     return
   fi
-  _CALLED="${_CALLED}:$path"
+  echo $path >> "${_CALLED}"
   (
     _NAV="${_NAV}/`basename $1 | sed "s/\.ble\$//" `"
     _BASE_DIR=`dirname "$path"`
     _ORIG_BASE_DIR="${_BASE_DIR}"
     _BLOCKS_STARTED=0
     _SKIP=0
+    _IS_CHILD=1
     print_start
     cd "${_BASE_DIR}" || fail "can't enter base dir '${_BASE_DIR}'"
     source ./`basename "$1"` || fail "there's an error in the playbook"
@@ -164,6 +166,10 @@ import() {
 
 info() {
   echo -e "   \033[32m($*)\033[0m"
+}
+
+i_am_child() {
+  [ -n "${_IS_CHILD}" ]
 }
 
 may_fail() {
@@ -437,6 +443,10 @@ yum_install() {
 if [ "${_BLEBOOK}" != _SUDO_ ]; then
   # when a script passed on stdin
   call "${_BLEBOOK}"
+  # cleanup
+  if ! i_am_child; then
+     rm "${_CALLED}"
+  fi
 else
   # when running a sudoed command
   # but first re-import all functions
