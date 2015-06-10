@@ -9,6 +9,7 @@ _SKIP=0               # skipping mode? reseted on next block
 _BLEBOOK=''           # script to be executed
 _BASE_DIR=''          # current base dir for blocks in a playbook
 _ORIG_BASE_DIR=''     # orig base dir when a playbook has been called
+_NOTIFY=`tempfile`    # will be called at the end
 _CALLED=`tempfile`    # already called playbooks
 _IS_CHILD=''          # 1 if this blebook is a sub-blebook
 _NAV=''               # navigation when calling sub-blebook(s)
@@ -192,6 +193,10 @@ not_on() {
 
 not() {
   "$@" && return 1 || return 0
+}
+
+notify_call() {
+  echo $1 >> "${_NOTIFY}"
 }
 
 # skip next tasks if the current hostname is not in defined
@@ -443,9 +448,13 @@ yum_install() {
 if [ "${_BLEBOOK}" != _SUDO_ ]; then
   # when a script passed on stdin
   call "${_BLEBOOK}"
+  while read path ; do
+    call "$path"
+  done < "${_NOTIFY}"
   # cleanup
   if ! i_am_child; then
      rm "${_CALLED}"
+     rm "${_NOTIFY}"
   fi
 else
   # when running a sudoed command

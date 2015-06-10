@@ -170,7 +170,7 @@ base_dir "/home/user1"
 reset_base_dir
 ```
 
-##### call PATH [force]
+##### call BLEBOOK_PATH [force]
 
 Call another blebook. It will run in a new process, therefore it won't affect the caller anyhow.
 The working directory of the called blebook is set to the same directory as the blebook file resides in.
@@ -182,6 +182,7 @@ Unless you specify "force", the same blebook won't run again if it has been alre
 call "./another-blebook.ble"
 ```
 
+see also 'notify_call' for postponed calls
 
 ##### fail MESSAGE
 
@@ -244,6 +245,18 @@ Runs the command and negate it's exit status.
 ```
 
 (or use "when" or "unless" with an exclamation mark)
+
+
+##### notify_call BLEBOOK_PATH
+
+Works like the 'call', but only remembers what should be called. The blebook will be called at the end of the process
+and will be called only once. 
+
+For instance: multiple blebooks want to restart nginx, but the restart should happen only once in the end, not each time.
+
+```bash
+notify_call './restart-nginx.ble'
+```
 
 ##### not_on HOST HOST ...
 
