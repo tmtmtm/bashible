@@ -371,6 +371,22 @@ b) inside a task block, skips following tasks unless TAG is found among specifie
   - ...
 ```
 
+##### var NAME #####
+
+Use at the top of the blebook. First it checks wether the environment variable is present,
+secondly it preserves it over sudo (which normally cleans the environment).
+It is preserved only for direct childs, you should use the 'var' command in all inherited blebooks again.
+
+```bash
+var DOMAIN
+
+@ Calling another blebook with timeout
+  - timeout 2 call './another.ble'
+```
+
+If the another.ble uses the variable $DOMAIN, it might not be present
+unless explicitely declared.
+
 ##### unless 'EVALUATED STRING' COMMAND ...
 
 see the "when" below (does the opposite)
@@ -436,6 +452,14 @@ Install ruby gems unless already (the check is quick).
 ```bash
 @ Installing application prerequisities
   - install_gem celluloid cuba sequel
+```
+
+##### only_user NAME
+
+Fails if current user is not the one defined.
+
+```bash
+only_user root
 ```
 
 ##### rpm_is_installed NAME

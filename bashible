@@ -1,17 +1,11 @@
 #!/bin/bash
 
-_BASHIBLE="$0"        # the bashible script itself
-_BLOCKS_STARTED=0     # zero before any block started
-_SKIP=0               # skipping mode? reseted on next block
-_BLEBOOK=''           # script to be executed
-_BASE_DIR=''          # current base dir for blocks in a playbook
-_ORIG_BASE_DIR=''     # orig base dir when a playbook has been called
-_IS_CHILD=''          # 1 if this blebook is a sub-blebook
-_NAV=''               # navigation when calling sub-blebook(s)
-IFS=','; _TAGS=($TAGS);  # when TAGS env is used (see "tag" helper)
-IFS=$' \t\n'          # bashible's default IFS
-_HOSTNAME=`hostname`
+# bashible
+# (c) Jan Molic 2015
+# https://github.com/mig1984/bashible
 
+
+### INTERNAL FUNCTIONS ####
 
 help() {
   echo "usage: bashible BLEBOOK.ble"
@@ -21,46 +15,36 @@ help() {
   exit 1
 }
 
-if [ "$1" = "--" ]; then
-
-  # when called internally to run a sudoed command
-  _BLEBOOK=_SUDO_
-  # _IMPORTED and PATH variables are parts of the command
-  shift
-
-  # now it will parse all functions below and then run the command 
-  # in the end
-
-elif [ "$1" = -h -o "$1" = --help ]; then
-
-  help
-
-else
-
-  _IMPORTED=':'         # imported files (re-sourced after sudo)
-  _BLEBOOK="$1"
-  if which tempfile >/dev/null; then
-     _NOTIFY=`tempfile`    # will be called at the end
-     _CALLED=`tempfile`    # already called playbooks
-  else
-     _NOTIFY=/tmp/bashible-$$.notify
-     _CALLED=/tmp/bashible-$$.called
-  fi
-
-fi
-
-if [ -z "${_BLEBOOK}" ]; then
-   help
-fi
-
-
-### INTERNAL FUNCTIONS ####
-
 # searches an array for an element; used internally
 containsElement() {
   local e
   for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
   return 1
+}
+
+# export preserved variables
+preserveEnvironment() {
+  IFS=':'; for i in $_PRESERVED; do
+     if [ -n "$i" ]; then
+        export "$i"
+     fi
+  done
+  IFS=$' \t\n'
+}
+
+# build _ENVREPEAT array
+buildENVREPEAT() {
+  _ENVREPEAT=()
+  _ENVREPEAT[0]="env"
+  local cnt=1
+  IFS=':'; for i in $_PRESERVED; do
+     IFS=$' \t\n'
+     if [ -n "$i" ]; then
+        _ENVREPEAT["$cnt"]="$i=`eval echo \\$$i`"
+        let cnt=cnt+1
+     fi
+  done
+  #echo "${_ENVREPEAT[@]}"
 }
 
 print_start() {
@@ -80,7 +64,7 @@ print_task() {
 }
 
 
-### CORE FUNCTIONS ####
+### CORE FUNCTIONS ###
 
 # represents a block; always chdirs to the base_dir (default = current directory)
 @() {
@@ -118,9 +102,10 @@ already_if() {
 # run following command as an user
 as() {
    local user=$1; shift
-   # can't be -i (login shell) otherwise -E won't work, it would also chdir to homedir
-   # PATH is usually erased by sudo, has to be preserved explicitly
-   /usr/bin/env sudo -E -u "$user" /usr/bin/env env -- PATH="${PATH}" _CALLED="${_CALLED}" _IMPORTED="${_IMPORTED}" _NOTIFY="${_NOTIFY}" "${_BASHIBLE}" -- "$@" || fail "sudo command failed (in `pwd`)"
+   # can't be -i (login shell) otherwise it would chdir to homedir
+   # and relative paths would behave unexpectedly
+   buildENVREPEAT
+   sudo -u "$user" "${_ENVREPEAT[@]}" "${_BASHIBLE}" -- "$@" || fail "sudo command failed (in `pwd`)"
 }
 
 # set base dir (will be chdired to it on each @ block)
@@ -164,9 +149,10 @@ fail() {
 }
 
 import() {
-   if ! echo "${_IMPORTED}" | grep ":$1:"; then
-      _IMPORTED="${_IMPORTED}$1:"
-      source "$1"
+   local path=`readlink -e "$1"` # get absolute path
+   if ! echo "${_IMPORTED}" | grep ":$path:"; then
+      _IMPORTED="${_IMPORTED}$path:"
+      source "$path"
    fi
 }
 
@@ -218,6 +204,14 @@ only_on() {
    fi
 }
 
+var() {
+   if var_is_empty "$1"; then
+      fail "variable $1 is empty"
+   fi
+   _PRESERVED="${_PRESERVED}$1:"
+   export "$1"
+}
+
 quiet() {
    "$@" >/dev/null 2>&1
 }
@@ -260,10 +254,11 @@ stop_if() {
   "$@" && stop || return 0
 }
 
-# skip next tasks if the tag is not in required tags
+# skip next tasks if the tag is not in required tags (passed as TAGS env variable; tags separated by comma)
 tag() {
-   if [ "${#_TAGS[@]}" -gt 0 ]; then
-     if ! containsElement "$1" "${_TAGS[@]}"; then
+   IFS=',';  local ary=($TAGS);  IFS=$' \t\n'
+   if [ "${#ary[@]}" -gt 0 ]; then
+     if ! containsElement "$1" "${ary[@]}"; then
        warn "does not match tags, skipping"
        _SKIP=1
      fi
@@ -354,6 +349,12 @@ rpm_is_installed() {
    return 1
 }
 
+only_user() {
+   if [ "$USER" != "$1" ]; then
+      fail "only user '$1' can run the blebook, you are $USER"
+   fi
+}
+
 prepend_line() {
    local line="$1"
    local path="$2"
@@ -404,6 +405,7 @@ symlink() {
 
 timeout() {
    local time=$1; shift
+   preserveEnvironment
    if ! /usr/bin/env timeout "$time" "${_BASHIBLE}" -- "$@"; then
       fail "timeout expired"
    fi
@@ -448,33 +450,71 @@ yum_install() {
 }
 
 
-### CHECK ###
+#### SETUP VARIABLES ####
 
-[ -z "${_CALLED}" ] && fail "can't create tempfile for _CALLED"
-[ -z "${_NOTIFY}" ] && fail "can't create tempfile for _NOTIFY"
+_BASHIBLE=`readlink -e "$0"` # the bashible script itself
+[ -z "${_BASHIBLE}" ] && fail "can't get _BASHIBLE; is readlink command present?"
+_HOSTNAME=`hostname`
 [ -z "${_HOSTNAME}" ] && fail "got no hostname"
+_BLOCKS_STARTED=0     # zero before any block started
+_SKIP=0               # skipping mode? reseted on next block
+_BLEBOOK=''           # script to be executed
+_BASE_DIR=''          # current base dir for blocks in a playbook
+_ORIG_BASE_DIR=''     # orig base dir when a playbook has been called
+_IS_CHILD=''          # 1 if this blebook is a sub-blebook
+_NAV=''               # navigation when calling sub-blebook(s)
+_PRESERVED='PATH:TAGS:_CALLED:_IMPORTED:_NOTIFY:' # preserved env variables; _PRESERVED itself is not preserved, must be explicitly declared in every blebook
+_ENVREPEAT=()         # used for copying preserved environment variables over sudo or a command
 
-### DO THE PROCESS ###
+# when called internally to run a sudoed command
+if [ "$1" = "--" ]; then
 
-if [ "${_BLEBOOK}" != _SUDO_ ]; then
-  # when a script passed on stdin
-  call "${_BLEBOOK}"
+  shift
+
+  # first re-import all imported files
+  IFS=':'; for i in $_IMPORTED; do
+     if [ -n "$i" ]; then
+        source "$i" || fail "problem while re-importing $i"
+     fi
+  done
+  IFS=$' \t\n'
+
+  # finally run the command; environment variables are included in the command
+  # (built by the preserveEnvironment)
+  "$@"
+
+# when a help is requested
+elif [ "$1" = -h -o "$1" = --help ]; then
+
+  help
+
+# when a blebook passed as the first parameter
+elif [ -n "$1" ]; then
+
+  _IMPORTED=':'            # imported files (re-sourced after sudo)
+
+  if which tempfile >/dev/null; then
+     _NOTIFY=`tempfile`    # will be called at the end
+     _CALLED=`tempfile`    # already called playbooks
+  else
+     _NOTIFY=/tmp/bashible-$$.notify
+     _CALLED=/tmp/bashible-$$.called
+  fi
+
+  # process the blebook
+  call "$1"
+
+  # at the end call notified commands
   while read path ; do
     call "$path"
   done < "${_NOTIFY}"
-  # cleanup
-  if ! i_am_child; then
-     rm "${_CALLED}"
-     rm "${_NOTIFY}"
-  fi
-else
-  # when running a sudoed command
-  # but first re-import all functions
-  IFS=':'; for i in $_IMPORTED; do
-     [ -n "$i" ] && source "$i"
-  done
-  IFS=$' \t\n'
-  # finally run the command
-  "$@"
-fi
 
+  # cleanup
+  rm "${_CALLED}"
+  rm "${_NOTIFY}"
+
+else
+
+  help
+
+fi
