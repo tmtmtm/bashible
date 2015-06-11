@@ -499,12 +499,15 @@ elif [ -n "$1" ]; then
   else
      _NOTIFY=/tmp/bashible-$$.notify
      _CALLED=/tmp/bashible-$$.called
+     touch "${_NOTIFY}" || fail "can't touch ${_NOTIFY}"
+     touch "${_CALLED}" || fail "can't touch ${_CALLED}"
   fi
 
   # process the blebook
   call "$1"
 
   # at the end call notified commands
+  _NAV='NOTIFIED'
   while read path ; do
     call "$path"
   done < "${_NOTIFY}"
