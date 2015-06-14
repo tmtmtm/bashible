@@ -114,6 +114,7 @@ base_dir() {
   if [ -z "${_BASE_DIR}" ]; then
     fail "base_dir: readlink -e '$1' failed"
   fi
+  cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
 }
 
 # use to call a bashible "playbook" instead of sourcing it
