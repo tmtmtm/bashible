@@ -220,6 +220,16 @@ reset_base_dir() {
   _BASE_DIR="${_ORIG_BASE_DIR}"
 }
 
+# just a sugar (looks more readable in a blebook)
+set_var() {
+  eval "$1=\"$2\""
+}
+
+set_var_exec() {
+ local var=$1; shift
+ eval "$var=\"\`$@\`\"" || fail "evaluated command failed"
+}
+
 skip() {
    if [ "${_BLOCKS_STARTED}" = 0 ]; then
      info "skipping all tasks of the blebook"
@@ -258,9 +268,10 @@ stop_if() {
 tag() {
    IFS=',';  local ary=($TAGS);  IFS=$' \t\n'
    if [ "${#ary[@]}" -gt 0 ]; then
+     echo "! cntElement $1 in $TAGS"
      if ! containsElement "$1" "${ary[@]}"; then
        warn "does not match tags, skipping"
-       _SKIP=1
+       skip
      fi
    fi
 }
@@ -493,7 +504,7 @@ elif [ -n "$1" ]; then
 
   _IMPORTED=':'            # imported files (re-sourced after sudo)
 
-  if which tempfile >/dev/null; then
+  if quiet which tempfile; then
      _NOTIFY=`tempfile`    # will be called at the end
      _CALLED=`tempfile`    # already called playbooks
   else

@@ -285,6 +285,25 @@ Runs the command with output directed to /dev/null.
 
 see the "base_dir" above
 
+
+##### set_var KEY VALUE
+
+The same as key="value". Just looks more readable in the blebook :-)
+
+```bash
+set_var DOMAIN "example.com"
+```
+
+##### set_var_exec KEY EVALUATED_STRING
+
+Stores output of a command in a variable. Fails (stops execution of the blebook)
+if the command fails.
+
+```bash
+set_var_exec FILES "ls -1 /home | grep abc "
+```
+
+
 ##### skip
 
 a) if used before all task blocks started, skips all following tasks in the blebook (exits the process)
@@ -373,7 +392,7 @@ b) inside a task block, skips following tasks unless TAG is found among specifie
 
 ##### var NAME #####
 
-Use at the top of the blebook. First it checks wether the environment variable is present,
+Use at the top of the blebook. First it checks wether the environment variable NAME is non-empty,
 secondly it preserves it over sudo (which normally cleans the environment).
 It is preserved only for direct childs, you should use the 'var' command in all inherited blebooks again.
 
@@ -381,11 +400,14 @@ It is preserved only for direct childs, you should use the 'var' command in all 
 var DOMAIN
 
 @ Calling another blebook with timeout
-  - timeout 2 call './another.ble'
+  - as myuser call './another.ble'
 ```
 
-If the another.ble uses the variable $DOMAIN, it might not be present
-unless explicitely declared.
+In the example, another blebook is called via sudo. If it uses the $DOMAIN, it will work
+(sudo usually clears environment, but $DOMAIN will be copied by bashible).
+
+Finally it's good to always explicitly list used variables, because empty values may be evil in Bash.
+
 
 ##### unless 'EVALUATED STRING' COMMAND ...
 
