@@ -372,7 +372,7 @@ stop_all_if var_is_empty ENVIRONMENT
 stop_all_if not test -d /etc/nginx
 ```
 
-##### tag TAG
+##### tags TAG
 
 There is a special environment variable TAGS. It may contain tags separated by a space.
 Then you can match these tags and skip actions.
@@ -397,7 +397,7 @@ Now if you execute the blebook with no TAGS ...
 
  ```bash
   bashible redis.ble
- `
+ ```
 
 => all three blocks will happen
 
