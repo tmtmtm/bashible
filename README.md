@@ -374,21 +374,54 @@ stop_all_if not test -d /etc/nginx
 
 ##### tag TAG
 
-If a blebook is run with TAGS environment variable set (tag words separated by a comma),
+There is a special environment variable TAGS. It may contain tags separated by a space.
+Then you can match these tags and skip actions.
 
-a) before task blocks started, stops execution of the blebook unless TAG is found among specified tags.
-
-```bash
-tag install deploy
-```
-
-b) inside a task block, skips following tasks unless TAG is found among specified tags.
+Example:
 
 ```bash
-@ Installing nginx
-  - tag install
-  - ...
+@ Compiling redis
+  - tags download compile
+  - ./configure
+  - make
+
+@ Installing redis
+  - tags install
+  - make install
+
+@ Starting redis service
+  - service start redis
 ```
+
+Now if you execute the blebook with no TAGS ...
+
+ ```bash
+  bashible redis.ble
+ `
+
+=> all three blocks will happen
+
+If you execute the blebook with TAGS ...
+
+ ```bash
+  TAGS="compile install" bashible redis.ble
+ ```
+
+=> again all three blocks will happen (in the third, there
+   are no tags specified - it will run by default)
+
+If you execute bashible with another TAGS ...
+
+ ```bash
+  TAGS="compile" bashible redis.ble
+ ```
+
+=> only the first and the third block will happen.
+
+
+Moreover, if you put "tags" inside tasks blocks as above, it will affect only those blocks.
+If you put "tags" before all tasks blocks, it will skip the whole blebook unless matched.
+
 
 ##### var NAME #####
 

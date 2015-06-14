@@ -264,16 +264,19 @@ stop_if() {
   "$@" && stop || return 0
 }
 
-# skip next tasks if the tag is not in required tags (passed as TAGS env variable; tags separated by comma)
-tag() {
-   IFS=',';  local ary=($TAGS);  IFS=$' \t\n'
-   if [ "${#ary[@]}" -gt 0 ]; then
-     echo "! cntElement $1 in $TAGS"
-     if ! containsElement "$1" "${ary[@]}"; then
-       warn "does not match tags, skipping"
-       skip
+# skip next tasks if the tag is not in required tags (passed as TAGS env variable)
+tags() {
+   local ary=($TAGS);
+   [ "${#ary[@]}" -eq 0 ] && return  # no tags given, continue normally
+
+   for tag in $@; do
+     if containsElement "$tag" "${ary[@]}"; then
+       return 0
      fi
-   fi
+   done
+
+   warn "does not match tags"
+   skip
 }
 
 warn() {
