@@ -372,7 +372,7 @@ stop_all_if var_is_empty ENVIRONMENT
 stop_all_if not test -d /etc/nginx
 ```
 
-##### tags TAG
+##### tags TAG ...
 
 There is a special environment variable TAGS. It may contain tags separated by a space.
 Then you can match these tags and skip actions.
@@ -523,14 +523,6 @@ Returns true if the rpm is installed.
 
 ```bash
 unless 'rpm_is_installed nginx' fail 'nginx RPM is not installed'
-```
-
-##### prepend_line LINE FILE
-
-Prepend the file with a line unless already.
-
-```bash
-prepend_line 'UseDNS no;' /etc/ssh/sshd_config
 ```
 
 ##### prepend_line LINE FILE

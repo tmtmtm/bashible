@@ -47,19 +47,19 @@ buildENVREPEAT() {
   #echo "${_ENVREPEAT[@]}"
 }
 
-print_start() {
+printStart() {
     echo -e "\n\033[1;37;45m ${_NAV} \033[1;37;44m START \033[0m"
 }
 
-print_block() {
+printBlock() {
     echo -e "\n\033[1;37;45m ${_NAV} \033[1;37;44m $* \033[0m"
 }
 
-print_finish() {
+printFinish() {
     echo -e "\n\033[1;37;45m ${_NAV} \033[1;37;44m FINISH \033[0m"
 }
 
-print_task() {
+printTask() {
     echo -e "\033[37m - $* \033[0m"
 }
 
@@ -71,14 +71,14 @@ print_task() {
    _BLOCKS_STARTED=1
    _SKIP=0
    cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
-   print_block $*
+   printBlock $*
 }
 
 # represents a task; if the task fails, the bashible script is stopped
 # if the block has been skipped, does nothing
 -() {
    if [ "${_SKIP}" != 1 ]; then
-     print_task $*
+     printTask $*
      "$@" || fail "'$@' failed (in `pwd`)";
    fi
 }
@@ -86,7 +86,7 @@ print_task() {
 already() {
   if [ "${_BLOCKS_STARTED}" = 0 ]; then
      warn "already, stopping here"
-     print_finish
+     printFinish
      exit
   else
      info "already, skipping following tasks"
@@ -137,10 +137,10 @@ call() {
     _BLOCKS_STARTED=0
     _SKIP=0
     _IS_CHILD=1
-    print_start
+    printStart
     cd "${_BASE_DIR}" || fail "can't enter base dir '${_BASE_DIR}'"
     source ./`basename "$1"` || fail "there's an error in the playbook"
-    print_finish
+    printFinish
   ) || exit 1
 }
 
@@ -247,13 +247,13 @@ skip_if() {
 
 stop() {
   info "stopping execution of the blebook"
-  print_finish
+  printFinish
   exit 0
 }
 
 stop_all() {
   info "stopping execution of the blebook and all parent blebooks"
-  print_finish
+  printFinish
   exit 1
 }
 
@@ -514,14 +514,15 @@ elif [ -n "$1" ]; then
   else
      _NOTIFY=/tmp/bashible-$$.notify
      _CALLED=/tmp/bashible-$$.called
-     touch "${_NOTIFY}" || fail "can't touch ${_NOTIFY}"
-     touch "${_CALLED}" || fail "can't touch ${_CALLED}"
   fi
+  touch "${_NOTIFY}" || fail "can't touch _NOTIFY temp file ${_NOTIFY}"
+  touch "${_CALLED}" || fail "can't touch _CALLED temp file ${_CALLED}"
+
 
   # process the blebook
   call "$1"
 
-  # at the end call notified commands
+  # at the end run all notified commands
   _NAV='NOTIFIED'
   while read path ; do
     call "$path"
