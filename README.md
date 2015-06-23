@@ -170,18 +170,20 @@ base_dir "/home/user1"
 reset_base_dir
 ```
 
-##### call BLEBOOK_PATH [force]
+##### call BLEBOOK_PATH [ARG1] [ARG2] ...
 
 Call another blebook. It will run in a new process, therefore it won't affect the caller anyhow.
 The working directory of the called blebook is set to the same directory as the blebook file resides in.
 The "call" is used also for the top blebook.
 
-Unless you specify "force", the same blebook won't run again if it has been already called.
+The same blebook won't run again if it has already been called (use 'force_call' if you want to bypass the check).
 
 ```bash
 call "./another-blebook.ble"
+call "./another-blebook.ble" "arg1" "arg2"
 ```
 
+see also 'force_call' which runs always again
 see also 'notify_call' for postponed calls
 
 ##### fail MESSAGE
@@ -191,6 +193,16 @@ Interrupts execution with a message displayed in red on stdout.
 ```bash
 - when 'var_is_empty SERVERNAME' fail "variable SERVERNAME must be set"
 ```
+
+##### force_call BLEBOOK_PATH [ARG1] [ARG2] ...
+
+The same as 'call' but bypasses the already-called check (always calls the blebook).
+
+```bash
+force_call "./another-blebook.ble"
+force_call "./another-blebook.ble" "arg1" "arg2"
+```
+
 
 ##### info MESSAGE
 
@@ -234,6 +246,16 @@ b) If used inside a task block, skips following tasks unless it is not run on on
 ```
 
 The "not_on" does the opposite.
+
+##### nonempty COMMAND ...
+
+Runs the command and fails if it doesn't produce any output (or also fails).
+
+In this example it loads domain.txt into a variable "domain" but fails if the file is not present or is empty.
+
+```bash
+set_var domain cat /etc/myapp/domain.txt
+```
 
 ##### not COMMAND ...
 
@@ -286,21 +308,24 @@ Runs the command with output directed to /dev/null.
 see the "base_dir" above
 
 
-##### set_var KEY VALUE
+##### set_var NAME [COMMAND...] #####
 
-The same as key="value". Just looks more readable in the blebook :-)
+Store the command's output in the variable. Fails if the command fails.
 
 ```bash
-set_var DOMAIN "example.com"
+set_var list ls /
 ```
 
-##### set_var_exec KEY EVALUATED_STRING
-
-Stores output of a command in a variable. Fails (stops execution of the blebook)
-if the command fails.
+You can use more complex command using 'evaluate' (which also fails if the evaluated string fails).
 
 ```bash
-set_var_exec FILES "ls -1 /home | grep abc "
+set_var list evaluate "ls / | grep usr"
+```
+
+You can make even more complex chain, for instance, there is a value stored in a file which we'd like to load into a variable. Moreover it should fail if the loaded value is empty.
+
+```bash
+set_var myuser nonempty evaluate 'cat /etc/hosts | grep myuser'
 ```
 
 
@@ -423,23 +448,15 @@ Moreover, if you put "tags" inside tasks blocks as above, it will affect only th
 If you put "tags" before all tasks blocks, it will skip the whole blebook unless matched.
 
 
-##### var NAME #####
+##### export_var NAME [COMMAND...] #####
 
-Use at the top of the blebook. First it checks wether the environment variable NAME is non-empty,
-secondly it preserves it over sudo (which normally cleans the environment).
-It is preserved only for direct childs, you should use the 'var' command in all inherited blebooks again.
+Calls set_var to store the command's output (if any) and then exports the variable. Also preserves it over sudo (which normally cleans the environment).
 
 ```bash
-var DOMAIN
-
-@ Calling another blebook with timeout
-  - as myuser call './another.ble'
+export_var DOMAIN foobar.com
 ```
 
-In the example, another blebook is called via sudo. If it uses the $DOMAIN, it will work
-(sudo usually clears environment, but $DOMAIN will be copied by bashible).
-
-Finally it's good to always explicitly list used variables, because empty values may be evil in Bash.
+for more info see 'set_var'
 
 
 ##### unless 'EVALUATED STRING' COMMAND ...
@@ -533,6 +550,14 @@ Prepend the file with a line unless already.
 prepend_line 'UseDNS no;' /etc/ssh/sshd_config
 ```
 
+##### prepend_line LINE FILE
+
+Prepend the file with a line unless already.
+
+```bash
+prepend_line 'UseDNS no;' /etc/ssh/sshd_config
+```
+
 ##### remove_line_matching REGEX FILE
 
 Remove line(s) matching regexp from the file.
@@ -559,10 +584,18 @@ replace_matching 'enabled=0' 'enabled=1' /etc/default/foo.cfg
 
 ##### set_contents CONTENTS FILE
 
-If the file is empty, write the contents. If the contents is already there, does nothing. Fails, if contents is there but differs.
+Write contents into the file, does nothing if already.
 
 ```bash
 set_contents 'centos-local' /etc/default/hostname
+```
+
+##### set_contents_safe CONTENTS FILE
+
+If the file is empty, write the contents into it. If the contents is already there, does nothing. Fails, if a different contents has already been there.
+
+```bash
+set_contents_safe 'centos-local' /etc/default/hostname
 ```
 
 ##### symlink SRC DEST

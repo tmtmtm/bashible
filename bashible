@@ -47,22 +47,33 @@ buildENVREPEAT() {
   #echo "${_ENVREPEAT[@]}"
 }
 
-printStart() {
-    echo -e "\n\033[1;37;45m ${_NAV} \033[1;37;44m START \033[0m"
+print_start() {
+    echo -e "\n\033[1;37;45m ${_NAV} \033[1;37;44m START \033[0m" >&2
 }
 
-printBlock() {
-    echo -e "\n\033[1;37;45m ${_NAV} \033[1;37;44m $* \033[0m"
+print_block() {
+    echo -e "\n\033[1;37;45m ${_NAV} \033[1;37;44m $* \033[0m" >&2
 }
 
-printFinish() {
-    echo -e "\n\033[1;37;45m ${_NAV} \033[1;37;44m FINISH \033[0m"
+print_finish() {
+    echo -e "\n\033[1;37;45m ${_NAV} \033[1;37;44m FINISH \033[0m" >&2
 }
 
-printTask() {
-    echo -e "\033[37m - $* \033[0m"
+print_task() {
+    echo -e "\033[37m - $* \033[0m" >&2
 }
 
+print_error() {
+  echo -e "   \033[31m($*)\033[0m" >&2
+}
+
+print_warn() {
+  echo -e "   \033[31m($*)\033[0m" >&2
+}
+
+print_info() {
+  echo -e "   \033[32m($*)\033[0m" >&2
+}
 
 ### CORE FUNCTIONS ###
 
@@ -71,25 +82,25 @@ printTask() {
    _BLOCKS_STARTED=1
    _SKIP=0
    cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
-   printBlock $*
+   print_block $*
 }
 
 # represents a task; if the task fails, the bashible script is stopped
 # if the block has been skipped, does nothing
 -() {
    if [ "${_SKIP}" != 1 ]; then
-     printTask $*
+     print_task $*
      "$@" || fail "'$@' failed (in `pwd`)";
    fi
 }
 
 already() {
   if [ "${_BLOCKS_STARTED}" = 0 ]; then
-     warn "already, stopping here"
-     printFinish
+     print_warn "already, stopping here"
+     print_finish
      exit
   else
-     info "already, skipping following tasks"
+     print_info "already, skipping following tasks"
      _SKIP=1
   fi
 }
@@ -105,7 +116,7 @@ as() {
    # can't be -i (login shell) otherwise it would chdir to homedir
    # and relative paths would behave unexpectedly
    buildENVREPEAT
-   sudo -u "$user" "${_ENVREPEAT[@]}" "${_BASHIBLE}" -- "$@" || fail "sudo command failed (in `pwd`)"
+   sudo -u "$user" "${_ENVREPEAT[@]}" "${_BASHIBLE}" -- "$@" || fail "as: sudo command failed (in `pwd`)";
 }
 
 # set base dir (will be chdired to it on each @ block)
@@ -117,36 +128,62 @@ base_dir() {
   cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
 }
 
+
 # use to call a bashible "playbook" instead of sourcing it
-# by default, calls only once unless forced
-# call './foo.ble' [force]
-call() {
+# does it's job only once unless already called
+# call './foo.ble'
+call() { 
   local path=`readlink -e "$1"` # get absolute path
   if [ -z "$path" ]; then
     fail "is the path of call '$1' correct at that place? (got empty path on readlink)"
   fi
-  if [ "$2" != force ] && grep -q "$path" "${_CALLED}"; then
-    # called already
-    return
+  if ! grep -q "$path" "${_CALLED}"; then
+    force_call "$@"
+  fi
+}
+
+evaluate() {
+  eval "$@" || { print_error "evaluate: command '$@' has failed"; return 1; }
+}
+
+export_var() {
+ if set_var "$@"; then
+   local name=$1; shift
+   eval "
+     _PRESERVED=\"\${_PRESERVED}\$$name:\"
+     export $name
+   "
+ else
+   return 1
+ fi
+}
+
+fail() {
+   echo -e "\033[1;37;41m ${_NAV}: $*, exiting \033[0m" >&2
+   exit 1
+}
+
+# use to call a bashible "playbook" instead of sourcing it
+# force_call './foo.ble'
+force_call() {
+  local path=`readlink -e "$1"` # get absolute path
+  if [ -z "$path" ]; then
+    fail "is the path of call '$1' correct at that place? (got empty path on readlink)"
   fi
   echo $path >> "${_CALLED}" || fail "can't write to _CALLED file (${_CALLED})"
   (
-    _NAV="${_NAV}/`basename $1 | sed "s/\.ble\$//" `"
+    _NAV="${_NAV}/`basename $path | sed "s/\.ble\$//" `"
     _BASE_DIR=`dirname "$path"`
     _ORIG_BASE_DIR="${_BASE_DIR}"
     _BLOCKS_STARTED=0
     _SKIP=0
     _IS_CHILD=1
-    printStart
+    print_start
     cd "${_BASE_DIR}" || fail "can't enter base dir '${_BASE_DIR}'"
-    source ./`basename "$1"` || fail "there's an error in the playbook"
-    printFinish
+    shift # shift the script name, pass other args as $1, $2, etc.
+    source ./`basename "$path"` || fail "there's an error in the playbook"
+    print_finish
   ) || exit 1
-}
-
-fail() {
-   echo -e "\033[1;37;41m ${_NAV}: $*, exiting \033[0m"
-   exit 1
 }
 
 import() {
@@ -157,9 +194,6 @@ import() {
    fi
 }
 
-info() {
-  echo -e "   \033[32m($*)\033[0m"
-}
 
 i_am_child() {
   [ -n "${_IS_CHILD}" ]
@@ -170,14 +204,28 @@ may_fail() {
   return 0
 }
 
+nonempty() {
+  local buf
+  eval "
+    buf=\"\`  \"\$@\"  \`\"
+  "
+  if [ $? != 0 ]; then
+     echo "$buf"
+     print_error "nonempty: command '$@' has failed";
+     return 1
+  fi
+  test -n "$buf" || { print_error "nonempty: got empty result while executing '$@'"; return 1; }
+  echo $buf
+}
+
 # opposite to only_on
 not_on() {
    if containsElement "${_HOSTNAME}" "$@"; then
       if [ "${_BLOCKS_STARTED}" = 0 ]; then
-         warn "skipping all tasks here on ${_HOSTNAME}"
+         print_warn "skipping all tasks here on ${_HOSTNAME}"
          stop
       else
-         warn "not on ${_HOSTNAME}, skipping"
+         print_warn "not on ${_HOSTNAME}, skipping"
          _SKIP=1
       fi
    fi
@@ -196,21 +244,13 @@ notify_call() {
 only_on() {
    if ! containsElement "${_HOSTNAME}" "$@"; then
       if [ "${_BLOCKS_STARTED}" = 0 ]; then
-         warn "skipping all tasks here on ${_HOSTNAME}"
+         print_warn "skipping all tasks here on ${_HOSTNAME}"
          stop
       else
-         warn "not on ${_HOSTNAME}, skipping"
+         print_warn "not on ${_HOSTNAME}, skipping"
          _SKIP=1
       fi
    fi
-}
-
-var() {
-   if var_is_empty "$1"; then
-      fail "variable $1 is empty"
-   fi
-   _PRESERVED="${_PRESERVED}$1:"
-   export "$1"
 }
 
 quiet() {
@@ -221,22 +261,25 @@ reset_base_dir() {
   _BASE_DIR="${_ORIG_BASE_DIR}"
 }
 
-# just a sugar (looks more readable in a blebook)
 set_var() {
-  eval "$1=\"$2\""
-}
-
-set_var_exec() {
- local var=$1; shift
- eval "$var=\"\`$@\`\"" || fail "evaluated command failed"
+ local name=$1; shift
+ if [ -n "$*" ]; then
+   eval "
+      $name=\"\`  \"\$@\"  \`\"
+   "
+   if [ $? != 0 ]; then
+     print_error "set_var: can't set, the command failed"
+     return 1
+   fi
+ fi
 }
 
 skip() {
    if [ "${_BLOCKS_STARTED}" = 0 ]; then
-     info "skipping all tasks of the blebook"
+     print_info "skipping all tasks of the blebook"
      exit
    else
-      info "skipping following tasks"
+      print_info "skipping following tasks"
      _SKIP=1
    fi
 }
@@ -246,14 +289,14 @@ skip_if() {
 }
 
 stop() {
-  info "stopping execution of the blebook"
-  printFinish
+  print_info "stopping execution of the blebook"
+  print_finish
   exit 0
 }
 
 stop_all() {
-  info "stopping execution of the blebook and all parent blebooks"
-  printFinish
+  print_info "stopping execution of the blebook and all parent blebooks"
+  print_finish
   exit 1
 }
 
@@ -276,13 +319,10 @@ tags() {
      fi
    done
 
-   warn "does not match tags"
+   print_warn "does not match tags"
    skip
 }
 
-warn() {
-  echo -e "   \033[31m($*)\033[0m"
-}
 
 when() {
    if eval "$1"; then
@@ -306,39 +346,51 @@ unless() {
 set_contents() {
    local contents="$1"
    local path="$2"
-   [ ! -w "$path" ] && fail "file '$path' is not writable or doesn't exist"
+   [ ! -w "$path" ] && { print_error "set_contents: file '$path' is not writable or doesn't exist"; return 1; }
    local current="` cat "$path" `"
-   [ $? != 0 ] && fail "can't read file '$path'"
-   [ -s "$path" -a "$contents" != "$current" ] && fail "file '$path' already contains something else"
+   [ $? != 0 ] && { print_error "set_contents: can't read file '$path'"; return 1; }
+   [ -s "$path" -a "$contents" = "$current" ] && return 0
+   echo "$contents" > "$path"
+}
+
+# write contents to an existing file
+# fails if the file is not empty and it's contents differs
+set_contents_safe() {
+   local contents="$1"
+   local path="$2"
+   [ ! -w "$path" ] && { print_error "set_contents_safe: file '$path' is not writable or doesn't exist"; return 1; }
+   local current="` cat "$path" `"
+   [ $? != 0 ] && { print_error "set_contents_safe: can't read file '$path'"; return 1; }
+   [ -s "$path" -a "$contents" != "$current" ] && { print_error "set_contents_safe: file '$path' already contains something else"; return 1; }
    echo "$contents" > "$path"
 }
 
 add_line() {
    local line="$1"
    local path="$2"
-   quiet head -n 1 "$path" || fail "can't read file '$path'"
+   quiet head -n 1 "$path" || { print_error "add_line: can't read file '$path'"; return 1; }
    if ! quiet grep -F "$line" "$path"; then
-     echo "$line" >> "$path" || fail "can't write to file '$path'"
+     echo "$line" >> "$path" || { print_error "add_line: can't write to file '$path'"; return 1; }
    else
-     info "already"
+     print_info "already"
    fi
 }
 
 append_line() {
    local line="$1"
    local path="$2"
-   quiet tail -n 1 "$path" || fail "can't read file '$path'"
+   quiet tail -n 1 "$path" || { print_error "append_line: can't read file '$path'"; return 1; }
    if [ "` tail -n 1 "$path" `" != "$line" ]; then
-     echo "$line" >> "$path" || fail "can't write to file '$path'"
+     echo "$line" >> "$path" || { print_error "append_line: can't write to file '$path'"; return 1; }
    else
-     info "already"
+     print_info "already"
    fi
 }
 
 comment_line_matching() {
    local match="$1"
    local path="$2"
-   [ ! -f "$path" ] && fail "file '$path' not found"
+   [ ! -f "$path" ] && { print_error "comment_line_matching: file '$path' not found"; return 1; }
    sed -i -r -e 's/^([^#]*'$match'.*)$/#\1/' "$path"
 }
 
@@ -346,9 +398,9 @@ comment_line_matching() {
 install_gem() {
    while [ -n "$1" ]; do
      if ! gem list "$1" | grep -q -e "^$1 "; then
-       gem install "$1" || fail "can't install gem"
+       gem install "$1" || { print_error "install_gem: can't install gem"; return 1; }
      else
-       info "already"
+       print_info "already"
      fi
      shift
    done
@@ -373,26 +425,26 @@ only_user() {
 prepend_line() {
    local line="$1"
    local path="$2"
-   quiet head -n 1 "$path" || fail "can't read file '$path'"
+   quiet head -n 1 "$path" || { print_error "prepend_line: can't read file '$path'"; return 1; }
    if [ "` head -n 1 "$path" `" != "$line" ]; then
-     sed -i "1i $line" "$path" || fail "can't edit file '$path'"
+     sed -i "1i $line" "$path" || { print_error "prepend_line: can't edit file '$path'"; return 1; }
    else
-     info "already"
+     print_info "already"
    fi
 }
 
 remove_line_matching() {
    local match="$1"
    local path="$2"
-   [ ! -f "$path" ] && fail "file '$path' not found"
-   sed -i "\\$line\\d" "$path" || fail "can't edit file '$path'"
+   [ ! -f "$path" ] && { print_error "remove_line_matching: file '$path' not found"; return 1; }
+   sed -i "\\$line\\d" "$path" || { print_error "remove_line_matching: can't edit file '$path'"; return 1; }
 }
 
 replace_matching() {
    local match="$1"
    local replace="$2"
    local path="$3"
-   [ ! -f "$path" ] && fail "file '$path' not found"
+   [ ! -f "$path" ] && { print_error "replace_matching: file '$path' not found"; return 1; }
    sed -i "s\\$match\\$replace\\g" "$path"
 }
 
@@ -400,7 +452,7 @@ replace_line_matching() {
    local match="$1"
    local replace="$2"
    local path="$3"
-   [ ! -f "$path" ] && fail "file '$path' not found"
+   [ ! -f "$path" ] && { print_error "replace_line_matching: file '$path' not found"; return 1; }
    sed -i "s\\.*$match.*\\$replace\\g" "$path"
 }
 
@@ -410,11 +462,12 @@ symlink() {
   if test -L "$2"; then
     local curr="`readlink "$2"`"
     if [ "$curr" != "$1" ]; then
-       fail "symlink exists already, but points to different location: $curr (should $2)"
+       print_error "symlink exists already, but points to different location: $curr (should $2)"
+       return 1
     fi
-    info "already"
+    print_info "already"
   else
-    ln -s "$1" "$2" || fail "can't create symlink"
+    ln -s "$1" "$2" || { print_error "can't create symlink"; return 1; }
   fi
 }
 
@@ -422,19 +475,16 @@ timeout() {
    local time=$1; shift
    preserveEnvironment
    if ! /usr/bin/env timeout "$time" "${_BASHIBLE}" -- "$@"; then
-      fail "timeout expired"
+      print_error "timeout expired"
+      return 1
    fi
 }
 
 uncomment_line_matching() {
    local match="$1"
    local path="$2"
-   [ ! -f "$path" ] && fail "file '$path' not found"
+   [ ! -f "$path" ] && { print_error "uncomment_line_matching: file '$path' not found"; return 1; }
    sed -i -r -e 's/^ *#(.*?'$match'.*)$/\1/' "$path"
-}
-
-var_is_empty() {
-   [ -z "`eval echo "$""$1"`" ]
 }
 
 # wait_for_tcp 10.0.3.188:80 up
@@ -455,10 +505,10 @@ wait_for_tcp() {
 yum_install() {
    while [ -n "$1" ]; do
      if ! rpm_is_installed "$1"; then
-        info "$1 seems to be not installed yet"
-        yum install -y "$1" || fail "can't install $1"
+        print_info "$1 seems to be not installed yet"
+        yum install -y "$1" || { print_error "yum_install: can't install $1"; return 1; }
      else
-        info "$1 already"
+        print_info "$1 already"
      fi
      shift
    done
@@ -514,15 +564,14 @@ elif [ -n "$1" ]; then
   else
      _NOTIFY=/tmp/bashible-$$.notify
      _CALLED=/tmp/bashible-$$.called
+     touch "${_NOTIFY}" || fail "can't touch ${_NOTIFY}"
+     touch "${_CALLED}" || fail "can't touch ${_CALLED}"
   fi
-  touch "${_NOTIFY}" || fail "can't touch _NOTIFY temp file ${_NOTIFY}"
-  touch "${_CALLED}" || fail "can't touch _CALLED temp file ${_CALLED}"
 
+  # process the blebook (and pass extra parameters, too)
+  call "$@"
 
-  # process the blebook
-  call "$1"
-
-  # at the end run all notified commands
+  # at the end call notified commands
   _NAV='NOTIFIED'
   while read path ; do
     call "$path"
