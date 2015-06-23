@@ -107,7 +107,7 @@ timeout 20 bash -c '
 a) If used before tasks started, skips execution of all tasks in the blebook (exits the process).
 
 ```bash
-when 'var_is_empty ENVIRONMENT' already
+when 'test -x /usr/sbin/nginx' already
 ```
 
 b) If used inside a tasks block, skips following tasks up to the next block.
@@ -127,7 +127,7 @@ Runs the command and if it results in true, calls "already"
 a) before task blocks started
 
 ```bash
-already_if var_is_empty ENVIRONMENT
+already_if test -x /usr/sbin/nginx
 ```
 
 b) inside a tasks block
@@ -191,7 +191,7 @@ see also 'notify_call' for postponed calls
 Interrupts execution with a message displayed in red on stdout.
 
 ```bash
-- when 'var_is_empty SERVERNAME' fail "variable SERVERNAME must be set"
+- when 'test -x /usr/sbin/nginx' fail "nginx must be installed first"
 ```
 
 ##### force_call BLEBOOK_PATH [ARG1] [ARG2] ...
@@ -325,13 +325,15 @@ set_var myuser nonempty evaluate 'cat /etc/hosts | grep myuser'
 a) if used before all task blocks started, skips all following tasks in the blebook (exits the process)
 
 ```bash
-when 'var_is_empty ENVIRONMENT' skip
+when 'test $ENVIRONMENT = development' skip
 ```
 
 b) skips following tasks up to a next block
 
 ```bash
-when 'var_is_empty ENVIRONMENT' skip
+@ Installing application if not in development mode
+  - when 'test $ENVIRONMENT = development' skip
+  - yum install myapp
 ```
 
 note: does the same like the "already", but outputs a different message
@@ -343,7 +345,7 @@ Runs the command and if it results in true, calls "skip"
 a) before task blocks started
 
 ```bash
-skip_if var_is_empty ENVIRONMENT
+skip_if 'test $ENVIRONMENT = development'
 ```
 
 b) inside a tasks block
@@ -359,7 +361,7 @@ b) inside a tasks block
 Stops execution of the blebook. If called from a parent blebook, it will continue normally.
 
 ```bash
-when 'var_is_empty ENVIRONMENT' stop
+when 'test $USER = root' stop
 ```
 
 ##### stop_all
@@ -367,7 +369,7 @@ when 'var_is_empty ENVIRONMENT' stop
 Stops execution of the blebook and all parent blebooks.
 
 ```bash
-when 'var_is_empty ENVIRONMENT' stop_all
+when 'test ! -f /etc/settings.cfg' stop_all
 ```
 
 ##### stop_if COMMAND ...
@@ -375,7 +377,7 @@ when 'var_is_empty ENVIRONMENT' stop_all
 Runs the command and if it results in true, calls "stop".
 
 ```bash
-stop_if var_is_empty ENVIRONMENT
+stop_if test ! -f /etc/settings.cfg
 stop_if not test -d /etc/nginx
 ```
 
@@ -384,7 +386,7 @@ stop_if not test -d /etc/nginx
 Runs the command and if it results in true, calls "stop_all".
 
 ```bash
-stop_all_if var_is_empty ENVIRONMENT
+stop_all_if test ! -f /etc/settings.cfg
 stop_all_if not test -d /etc/nginx
 ```
 
@@ -460,8 +462,10 @@ see the "when" below (does the opposite)
 Runs the command if the evaluated string returns true ("when") or false ("unless").
 
 ```bash
-when 'var_is_empty ENVIRONMENT' fail 'ENVIRONMENT variable is not set!'
-unless '! var_is_empty ENVIRONMENT' fail 'ENVIRONMENT variable is not set!'
+when 'test -z "$ENVIRONMENT"' fail 'ENVIRONMENT variable is not set!'
+when 'test ! -n "$ENVIRONMENT"' fail 'ENVIRONMENT variable is not set!'
+unless '! test -z "$ENVIRONMENT"' fail 'ENVIRONMENT variable is not set!'
+unless 'test ! -z "$ENVIRONMENT"' fail 'ENVIRONMENT variable is not set!'
 
 @ Installing nginx unless already
   - when 'test -f /etc/nginx/nginx.conf' already
@@ -600,14 +604,6 @@ Runs the command but fails if it lasts more than SECS.
   - timeout 20 wait_for_tcp 127.0.0.1:80 up
 ```
 
-##### var_is_empty VARNAME
-
-Results true if the env variable VARNAME is empty.
-
-```bash
-when 'var_is_empty ENVIRONMENT' fail 'ENVIRONMENT variable must be set'
-```
-
 ##### uncomment_line_matching REGEXP FILE
 
 Removes '#' from the beginning of matching line(s) in the file.
@@ -714,9 +710,9 @@ use "export",
 @ Installing nginx unless already
   - already_if test -d /etc/nginx
   - yum install nginx
-  - export NGINX_INSTALLED=1
+  - set_var NGINX_INSTALLED echo 1
 
 @ Configuring nginx if freshly installed
-  - skip_if 'var_is_empty NGINX_INSTALLED'
+  - skip_if test $NGINX_INSTALLED = 1
   - cp -a /defaults/nginx/* /etc/nginx/
 ```
