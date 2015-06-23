@@ -203,15 +203,6 @@ force_call "./another-blebook.ble"
 force_call "./another-blebook.ble" "arg1" "arg2"
 ```
 
-
-##### info MESSAGE
-
-Prints info message to stdout.
-
-```bash
-info "foobar"
-```
-
 ##### import PATH
 
 Use "import" instead of "source". It does the same, but remembers imported files. When a command is run using sudo, all files will be re-sourced
@@ -463,13 +454,6 @@ for more info see 'set_var'
 
 see the "when" below (does the opposite)
 
-##### warn MESSAGE
-
-Prints warn message to stdout.
-
-```bash
-info "foobar"
-```
 
 ##### when 'EVALUATED STRING' COMMAND ...
 
