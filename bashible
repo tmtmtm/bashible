@@ -177,7 +177,7 @@ force_call() {
     _ORIG_BASE_DIR="${_BASE_DIR}"
     _BLOCKS_STARTED=0
     _SKIP=0
-    _IS_CHILD=1
+    let _LEVEL=_LEVEL+1
     print_start
     cd "${_BASE_DIR}" || fail "can't enter base dir '${_BASE_DIR}'"
     shift # shift the script name, pass other args as $1, $2, etc.
@@ -196,7 +196,7 @@ import() {
 
 
 i_am_child() {
-  [ -n "${_IS_CHILD}" ]
+  [ "${_LEVEL}" -gt 1 ]
 }
 
 may_fail() {
@@ -526,7 +526,7 @@ _SKIP=0               # skipping mode? reseted on next block
 _BLEBOOK=''           # script to be executed
 _BASE_DIR=''          # current base dir for blocks in a playbook
 _ORIG_BASE_DIR=''     # orig base dir when a playbook has been called
-_IS_CHILD=''          # 1 if this blebook is a sub-blebook
+_LEVEL=0              # >1 is a sub-blebook
 _NAV=''               # navigation when calling sub-blebook(s)
 _PRESERVED='PATH:TAGS:_CALLED:_IMPORTED:_NOTIFY:' # preserved env variables; _PRESERVED itself is not preserved, must be explicitly declared in every blebook
 _ENVREPEAT=()         # used for copying preserved environment variables over sudo or a command
