@@ -139,7 +139,7 @@ call() {
     fail "is the path of call '$1' correct at that place? (got empty path on readlink)"
   fi
   if ! grep -q "$path $@" "${_CALLED}"; then
-    force_call "$path"
+    force_call "$path" "$@"
   fi
 }
 
