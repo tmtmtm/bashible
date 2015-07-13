@@ -245,7 +245,7 @@ Runs the command and fails if it doesn't produce any output (or also fails).
 In this example it loads domain.txt into a variable "domain" but fails if the file is not present or is empty.
 
 ```bash
-set_var domain cat /etc/myapp/domain.txt
+set_var domain nonempty cat /etc/myapp/domain.txt
 ```
 
 ##### not COMMAND ...

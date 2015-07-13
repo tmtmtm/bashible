@@ -263,14 +263,15 @@ reset_base_dir() {
 
 set_var() {
  local name=$1; shift
+ local value;
  if [ -n "$*" ]; then
-   eval "
-      $name=\"\`  \"\$@\"  \`\"
-   "
+   value=`  "$@"  `
    if [ $? != 0 ]; then
      print_error "set_var: can't set, the command failed"
      return 1
    fi
+   print_info "$name=$value"
+   eval "$name=\$value"
  fi
 }
 
