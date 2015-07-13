@@ -134,11 +134,12 @@ base_dir() {
 # call './foo.ble'
 call() { 
   local path=`readlink -e "$1"` # get absolute path
+  shift
   if [ -z "$path" ]; then
     fail "is the path of call '$1' correct at that place? (got empty path on readlink)"
   fi
-  if ! grep -q "$path" "${_CALLED}"; then
-    force_call "$@"
+  if ! grep -q "$path $@" "${_CALLED}"; then
+    force_call "$path"
   fi
 }
 
@@ -167,10 +168,11 @@ fail() {
 # force_call './foo.ble'
 force_call() {
   local path=`readlink -e "$1"` # get absolute path
+  shift # shift the script name, pass other args as $1, $2, etc.
   if [ -z "$path" ]; then
     fail "is the path of call '$1' correct at that place? (got empty path on readlink)"
   fi
-  echo $path >> "${_CALLED}" || fail "can't write to _CALLED file (${_CALLED})"
+  echo "$path $@" >> "${_CALLED}" || fail "can't write to _CALLED file (${_CALLED})"
   (
     _NAV="${_NAV}/`basename $path | sed "s/\.ble\$//" `"
     _BASE_DIR=`dirname "$path"`
@@ -180,7 +182,6 @@ force_call() {
     let _LEVEL=_LEVEL+1
     print_start
     cd "${_BASE_DIR}" || fail "can't enter base dir '${_BASE_DIR}'"
-    shift # shift the script name, pass other args as $1, $2, etc.
     source ./`basename "$path"` || fail "there's an error in the playbook"
     print_finish
   ) || exit 1
