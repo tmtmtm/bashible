@@ -1,0 +1,55 @@
+licence:
+
+  Apache -> MIT
+
+functions removed:
+
+  already,
+  already_if
+  (skip, skip_if do the same)
+
+  only_user
+    use this instead:
+      unless 'i_am guest1 guest2' halt "must be root"
+      or
+      halt_if not i_am guest1 guest2
+
+  not_on
+    use this instead:
+      when 'on host1 host2' halt "not on host1 or host2"
+      or
+      halt_if not on host1 host2
+
+  nonempty
+    use "not empty" instead
+
+  only_on
+    use this instead:
+      unless 'on host1 host2' halt "not on host1 or host2"
+
+
+new functions:
+
+  i_am
+  empty
+
+functions renamed:
+
+  stop_all => halt
+  stop => finish
+
+  notify_call => delayed_call
+
+changed behaviour:
+  
+  as
+    doesn't fail if the sudoed command fails
+    (might be it's behaviour)
+
+  tags
+    does not automatically skip,
+    use this instead:
+      unless 'tags foo bar' skip
+      or
+      skip_if not tags foo bar
+

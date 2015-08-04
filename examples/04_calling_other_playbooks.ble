@@ -1,8 +1,0 @@
-call "./00_hello_world.ble"
-call "./00_hello_world.ble"
-
-# It won't call it twice. Thanks to it, you can use the same dependency 
-# in an inherrited playbook and it also protects you against circular dependencies.
-
-# The working directory is always set to the same directory the called playbook
-# resides in.

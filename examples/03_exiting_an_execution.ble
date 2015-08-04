@@ -1,8 +1,0 @@
-@ This will exit with a message if you have mc installed
-  - when 'which mc' stop
-  - echo "you don't have mc installed"
-
-
-# There is a helper "stop_if", you could use it like
-# - stop_if which mc
-

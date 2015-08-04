@@ -8,7 +8,7 @@
 ### INTERNAL FUNCTIONS ####
 
 help() {
-  echo "usage: bashible BLEBOOK.ble"
+  echo "usage: bashible script.ble"
   echo
   echo "see also: https://github.com/mig1984/bashible"
   echo
@@ -77,7 +77,6 @@ print_info() {
 
 ### CORE FUNCTIONS ###
 
-# represents a block; always chdirs to the base_dir (default = current directory)
 @() {
    _BLOCKS_STARTED=1
    _SKIP=0
@@ -85,8 +84,6 @@ print_info() {
    print_block $*
 }
 
-# represents a task; if the task fails, the bashible script is stopped
-# if the block has been skipped, does nothing
 -() {
    if [ "${_SKIP}" != 1 ]; then
      print_task $*
@@ -94,32 +91,14 @@ print_info() {
    fi
 }
 
-already() {
-  if [ "${_BLOCKS_STARTED}" = 0 ]; then
-     print_warn "already, stopping here"
-     print_finish
-     exit
-  else
-     print_info "already, skipping following tasks"
-     _SKIP=1
-  fi
-}
-
-# the same as skip_if, just a different message
-already_if() {
-  "$@" && already || return 0
-}
-
-# run following command as an user
 as() {
    local user=$1; shift
-   # can't be -i (login shell) otherwise it would chdir to homedir
-   # and relative paths would behave unexpectedly
    buildENVREPEAT
-   sudo -u "$user" "${_ENVREPEAT[@]}" "${_BASHIBLE}" -- "$@" || fail "as: sudo command failed (in `pwd`)";
+   # login shell (-i) can't be used, otherwise it would chdir to homedir
+   # and relative paths would behave unexpectedly
+   sudo -u "$user" "${_ENVREPEAT[@]}" "${_BASHIBLE}" -- "$@"
 }
 
-# set base dir (will be chdired to it on each @ block)
 base_dir() {
   _BASE_DIR=`readlink -e "$1"` # get absolute path
   if [ -z "${_BASE_DIR}" ]; then
@@ -128,10 +107,6 @@ base_dir() {
   cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
 }
 
-
-# use to call a bashible "playbook" instead of sourcing it
-# does it's job only once unless already called
-# call './foo.ble'
 call() { 
   local path=`readlink -e "$1"` # get absolute path
   shift
@@ -143,19 +118,38 @@ call() {
   fi
 }
 
+empty() {
+  local buf
+  eval "
+    buf=\"\`  \"\$@\"  \`\"
+  "
+  local ex=$?
+  if [ $ex != 0 ]; then
+     echo "$buf"
+     print_error "empty: warning: command '$@' has failed";
+     return 0
+  fi
+  # must print the buffer; maybe it is called via "not" function and therefore we will need the output
+  echo $buf
+  # and return this
+  test -z "$buf" 
+}
+
 evaluate() {
-  eval "$@" || { print_error "evaluate: command '$@' has failed"; return 1; }
+  eval "$@" || { var ex=$?; print_error "evaluate: command '$@' has failed (exit $ex)"; return $ex; }
 }
 
 export_var() {
- if set_var "$@"; then
+ set_var "$@"
+ local ex=$?
+ if [ $ex -eq 0 ]; then
    local name=$1; shift
    eval "
      _PRESERVED=\"\${_PRESERVED}\$$name:\"
      export $name
    "
  else
-   return 1
+   return $ex
  fi
 }
 
@@ -164,8 +158,16 @@ fail() {
    exit 1
 }
 
-# use to call a bashible "playbook" instead of sourcing it
-# force_call './foo.ble'
+finish() {
+  print_info "finishing execution of the script$@"
+  print_finish
+  exit 0
+}
+
+finish_if() {
+  "$@" && finish || return 0
+}
+
 force_call() {
   local path=`readlink -e "$1"` # get absolute path
   shift # shift the script name, pass other args as $1, $2, etc.
@@ -182,9 +184,19 @@ force_call() {
     let _LEVEL=_LEVEL+1
     print_start
     cd "${_BASE_DIR}" || fail "can't enter base dir '${_BASE_DIR}'"
-    source ./`basename "$path"` || fail "there's an error in the playbook"
+    source ./`basename "$path"` || fail "there's an error in the called script"
     print_finish
   ) || exit 1
+}
+
+halt() {
+  print_info "halting execution$@"
+  print_finish
+  exit 1
+}
+
+halt_if() {
+  "$@" && halt || return 0
 }
 
 import() {
@@ -195,7 +207,6 @@ import() {
    fi
 }
 
-
 i_am_child() {
   [ "${_LEVEL}" -gt 1 ]
 }
@@ -205,53 +216,17 @@ may_fail() {
   return 0
 }
 
-nonempty() {
-  local buf
-  eval "
-    buf=\"\`  \"\$@\"  \`\"
-  "
-  if [ $? != 0 ]; then
-     echo "$buf"
-     print_error "nonempty: command '$@' has failed";
-     return 1
-  fi
-  test -n "$buf" || { print_error "nonempty: got empty result while executing '$@'"; return 1; }
-  echo $buf
-}
-
-# opposite to only_on
-not_on() {
-   if containsElement "${_HOSTNAME}" "$@"; then
-      if [ "${_BLOCKS_STARTED}" = 0 ]; then
-         print_warn "skipping all tasks here on ${_HOSTNAME}"
-         stop
-      else
-         print_warn "not on ${_HOSTNAME}, skipping"
-         _SKIP=1
-      fi
-   fi
-}
 
 not() {
   "$@" && return 1 || return 0
 }
 
-notify_call() {
-  readlink -e "$1" >> "${_NOTIFY}" || fail "can't write to _NOTIFY file (${_NOTIFY})"
+delayed_call() {
+  readlink -e "$1" >> "${_DELAYED}" || fail "can't write to _DELAYED file (${_DELAYED})"
 }
 
-# skip next tasks if the current hostname is not in defined
-# if called before all blocks, can skip all of them
-only_on() {
-   if ! containsElement "${_HOSTNAME}" "$@"; then
-      if [ "${_BLOCKS_STARTED}" = 0 ]; then
-         print_warn "skipping all tasks here on ${_HOSTNAME}"
-         stop
-      else
-         print_warn "not on ${_HOSTNAME}, skipping"
-         _SKIP=1
-      fi
-   fi
+on() {
+   containsElement "${_HOSTNAME}" "$@"
 }
 
 quiet() {
@@ -267,9 +242,10 @@ set_var() {
  local value;
  if [ -n "$*" ]; then
    value=`  "$@"  `
-   if [ $? != 0 ]; then
-     print_error "set_var: can't set, the command failed"
-     return 1
+   local ex=$?
+   if [ $ex != 0 ]; then
+     print_error "set_var: the command '$@' has failed"
+     return $ex
    fi
    print_info "$name=$value"
    eval "$name=\$value"
@@ -277,40 +253,14 @@ set_var() {
 }
 
 skip() {
-   if [ "${_BLOCKS_STARTED}" = 0 ]; then
-     print_info "skipping all tasks of the blebook"
-     exit
-   else
-      print_info "skipping following tasks"
-     _SKIP=1
-   fi
+  print_info "skipping following tasks$@"
+  _SKIP=1
 }
 
 skip_if() {
   "$@" && skip || return 0
 }
 
-stop() {
-  print_info "stopping execution of the blebook"
-  print_finish
-  exit 0
-}
-
-stop_all() {
-  print_info "stopping execution of the blebook and all parent blebooks"
-  print_finish
-  exit 1
-}
-
-stop_all_if() {
-  "$@" && stop_all || return 0
-}
-
-stop_if() {
-  "$@" && stop || return 0
-}
-
-# skip next tasks if the tag is not in required tags (passed as TAGS env variable)
 tags() {
    local ary=($TAGS);
    [ "${#ary[@]}" -eq 0 ] && return  # no tags given, continue normally
@@ -322,9 +272,8 @@ tags() {
    done
 
    print_warn "does not match tags"
-   skip
+   return 1
 }
-
 
 when() {
    if eval "$1"; then
@@ -343,8 +292,6 @@ unless() {
 
 ### USEFUL HELPERS ###
 
-# write contents to an existing file
-# fails if the file is not empty and it's contents differs
 set_contents() {
    local contents="$1"
    local path="$2"
@@ -355,8 +302,6 @@ set_contents() {
    echo "$contents" > "$path"
 }
 
-# write contents to an existing file
-# fails if the file is not empty and it's contents differs
 set_contents_safe() {
    local contents="$1"
    local path="$2"
@@ -396,7 +341,10 @@ comment_line_matching() {
    sed -i -r -e 's/^([^#]*'$match'.*)$/#\1/' "$path"
 }
 
-# WARN: gem_install is provided by RVM and it takes precedence! therefore this is install_gem
+i_am() {
+   containsElement "${USER}" "$@"
+}
+
 install_gem() {
    while [ -n "$1" ]; do
      if ! gem list "$1" | grep -q -e "^$1 "; then
@@ -416,12 +364,6 @@ rpm_is_installed() {
       fi
    done
    return 1
-}
-
-only_user() {
-   if [ "$USER" != "$1" ]; then
-      fail "only user '$1' can run the blebook, you are $USER"
-   fi
 }
 
 prepend_line() {
@@ -489,8 +431,6 @@ uncomment_line_matching() {
    sed -i -r -e 's/^ *#(.*?'$match'.*)$/\1/' "$path"
 }
 
-# wait_for_tcp 10.0.3.188:80 up
-# wait_for_tcp 10.0.3.188:80 down
 wait_for_tcp() {
   local what="$1"
   local up="$2"
@@ -516,8 +456,9 @@ yum_install() {
    done
 }
 
+#### START #####
 
-#### SETUP VARIABLES ####
+# setup variables
 
 _BASHIBLE=`readlink -e "$0"` # the bashible script itself
 [ -z "${_BASHIBLE}" ] && fail "can't get _BASHIBLE; is readlink command present?"
@@ -530,11 +471,12 @@ _BASE_DIR=''          # current base dir for blocks in a playbook
 _ORIG_BASE_DIR=''     # orig base dir when a playbook has been called
 _LEVEL=0              # >1 is a sub-blebook
 _NAV=''               # navigation when calling sub-blebook(s)
-_PRESERVED='PATH:TAGS:_CALLED:_IMPORTED:_NOTIFY:' # preserved env variables; _PRESERVED itself is not preserved, must be explicitly declared in every blebook
+_PRESERVED='PATH:TAGS:_CALLED:_IMPORTED:_DELAYED:' # preserved env variables; _PRESERVED itself is not preserved, must be explicitly declared in every blebook
 _ENVREPEAT=()         # used for copying preserved environment variables over sudo or a command
 
-# when called internally to run a sudoed command
 if [ "$1" = "--" ]; then
+
+  # I'm called internally to run a sudoed command
 
   shift
 
@@ -550,38 +492,39 @@ if [ "$1" = "--" ]; then
   # (built by the preserveEnvironment)
   "$@"
 
-# when a help is requested
 elif [ "$1" = -h -o "$1" = --help ]; then
 
   help
 
-# when a blebook passed as the first parameter
+
 elif [ -n "$1" ]; then
+
+  # a blebook is passed as the first argument
 
   _IMPORTED=':'            # imported files (re-sourced after sudo)
 
   if quiet which tempfile; then
-     _NOTIFY=`tempfile`    # will be called at the end
+     _DELAYED=`tempfile`    # will be called at the end
      _CALLED=`tempfile`    # already called playbooks
   else
-     _NOTIFY=/tmp/bashible-$$.notify
+     _DELAYED=/tmp/bashible-$$.delayed
      _CALLED=/tmp/bashible-$$.called
-     touch "${_NOTIFY}" || fail "can't touch ${_NOTIFY}"
+     touch "${_DELAYED}" || fail "can't touch ${_DELAYED}"
      touch "${_CALLED}" || fail "can't touch ${_CALLED}"
   fi
 
   # process the blebook (and pass extra parameters, too)
   call "$@"
 
-  # at the end call notified commands
-  _NAV='NOTIFIED'
+  # at the end call delayed commands
+  _NAV='DELAYED'
   while read path ; do
     call "$path"
-  done < "${_NOTIFY}"
+  done < "${_DELAYED}"
 
   # cleanup
   rm "${_CALLED}"
-  rm "${_NOTIFY}"
+  rm "${_DELAYED}"
 
 else
 
