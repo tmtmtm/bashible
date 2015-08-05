@@ -36,8 +36,8 @@ A bashible script:
   - call ./system_base.ble
 
 @ Setting up some variables
-  - set_var fqdn not empty hostname
-  - set_var domain2 not empty evaluate "echo $fqdn | awk -F . '{ print \$(NF-1) \".\" \$NF }' "
+  - set_var fqdn nonempty hostname
+  - set_var domain2 nonempty evaluate "echo $fqdn | awk -F . '{ print \$(NF-1) \".\" \$NF }' "
 
 @ Adding user webuser and his public key
   - may_fail useradd webuser
