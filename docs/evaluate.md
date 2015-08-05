@@ -6,6 +6,6 @@ In the example, we load users starting with the letter "g" (and also check that 
 
 ```bash
 @ Loading some variables
- - set_var USERS not empty evaluate 'cat /etc/passwd | egrep -e ^g'
+ - set_var USERS nonempty evaluate 'cat /etc/passwd | egrep -e ^g'
 ```
 
