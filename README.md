@@ -26,7 +26,7 @@ features:
 
 ## Example
 
-A bashible script:
+A bashible script.ble (scripts should have the .ble extension):
 
 ```bash
 
@@ -36,8 +36,12 @@ A bashible script:
   - call ./system_base.ble
 
 @ Setting up some variables
-  - set_var fqdn nonempty hostname
-  - set_var domain2 nonempty evaluate "echo $fqdn | awk -F . '{ print \$(NF-1) \".\" \$NF }' "
+  - set_var FQDN nonempty hostname
+  - set_var DOMAIN2 nonempty evaluate "echo $FQDN | awk -F . '{ print \$(NF-1) \".\" \$NF }' "
+  # expects an ip address to be passed as the first argument to the script
+  - set_var MY_IP echo $1
+  # expects a public key to be passed on stdout
+  - set_var PUBLIC_KEY nonempty cat
 
 @ Adding user webuser and his public key
   - may_fail useradd webuser
@@ -50,18 +54,21 @@ A bashible script:
 @ Install nginx unless already
   - skip_if test -x /usr/sbin/nginx
   - yum_install nginx
-  - rsync -av /adm/config/webserver/ /
+  - rsync -av /shared/config/webserver/ /
 
 @ Start nginx and ensure it is running
   - service nginx start
-  - timeout 20 wait_for_tcp 10.0.3.188:80 up
+  - timeout 20 wait_for_tcp "$MY_IP":80 up
 ```
 
-`@` represents a block of tasks, `-` represents a task. Both are bash functions with names `@` and `-` (their behaviour is explained below).
-You would then run the script by executing `bashible script.ble`.
+You would then run the script by executing
+
+`echo YOUR PUBLIC KEY | bashible script.ble 10.20.30.40`
+
+By the way, `@` represents a block of tasks, `-` represents a task. Both are bash functions, named `@` and `-` (their behaviour is explained below).
 
 
-About the same in Bash:
+About the same in plain bash:
 
 ```bash
 basedir=`dirname $(readlink -f "$0")`
@@ -75,13 +82,21 @@ fi
 source './system_base.ble' || { echo 'error sourcing functions'; exit 1; }
 
 echo "Setting up some variables"
-fqdn=`hostname`
-if [ -z "$fqdn" ]; then
-  echo "fqdn is empty"; exit 1
+FQDN=`hostname`
+if [ -z "$FQDN" ]; then
+  echo "FQDN is empty"; exit 1
 fi
-domain2=`echo $fqdn | awk -F . '{ print \$(NF-1) \".\" \$NF }' "`
-if [ -z "$domain2" ]; then
-  echo "domain2 is empty"; exit 1
+DOMAIN2=`echo $FQDN | awk -F . '{ print \$(NF-1) \".\" \$NF }' "`
+if [ -z "$DOMAIN2" ]; then
+  echo "DOMAIN2 is empty"; exit 1
+fi
+MY_IP=$1
+if [ -z "$MY_IP" ]; then
+  echo "MY_IP is empty"; exit 1
+fi
+PUBLIC_KEY=`cat`
+if [ -z "$PUBLIC_KEY" ]; then
+  echo "PUBLIC_KEY is empty"; exit 1
 fi
 
 echo "Adding user webuser and his public key"
@@ -99,13 +114,13 @@ if [ ! -x /usr/sbin/nginx ]; then
   echo "Installing nginx unless already"
   yum install -y nginx || { echo "yum failed"; exit 1; }
   echo "Installing default vhosts.d contents unless already"
-  rsync -av /adm/config/webserver/ / || { echo "rsync failed"; exit 1; }
+  rsync -av /shared/config/webserver/ / || { echo "rsync failed"; exit 1; }
 fi
 
 echo "Start nginx and ensure it is running"
 service start nginx
 timeout 20 bash -c '
-  while ! netstat -ltn | grep LISTEN | grep 10.0.3.188:80; do
+  while ! netstat -ltn | grep LISTEN | grep "$MY_IP":80; do
     sleep 1; 
   done
 '
@@ -123,7 +138,7 @@ timeout 20 bash -c '
  then
 
 ```bash
- ./bashible your-script.ble
+ ./bashible your-script.ble ARG1 ARG2 ...
 ```
 
 ## Functions
