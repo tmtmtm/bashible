@@ -1,7 +1,7 @@
 @ Prerequisities
   - i_am root
-  - not empty echo $IP
-  - not empty echo $HOST
+  - nonempty echo $IP
+  - nonempty echo $HOST
 
 @ Installing base utils
   - yum_install sudo which tar wget mailx bzip2 rsync screen openssl-devel
