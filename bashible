@@ -159,7 +159,11 @@ force_call() {
   fi
   echo "$path $@" >> "${_CALLED}" || fail "can't write to _CALLED file (${_CALLED})"
   (
-    _NAV="${_NAV}/`basename $path | sed "s/\.ble\$//" `"
+    if [ -z "${_NAV}" ]; then
+       _NAV="`basename $path | sed "s/\.ble\$//" `"
+    else
+       _NAV="${_NAV} -> `basename $path | sed "s/\.ble\$//" `"
+    fi
     _BASE_DIR=`dirname "$path"`
     _ORIG_BASE_DIR="${_BASE_DIR}"
     _BLOCKS_STARTED=0
