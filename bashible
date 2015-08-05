@@ -207,8 +207,7 @@ nonempty() {
   local ex=$?
   if [ $ex != 0 ]; then
      echo "$buf"
-     print_error "nonempty: command '$@' has failed";
-     return $ex
+     fail "nonempty: command '$@' exited $ex";
   fi
   test -n "$buf" || { print_error "nonempty: got empty result while executing '$@'"; return 1; }
   echo $buf
