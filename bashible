@@ -213,7 +213,7 @@ nonempty() {
      echo "$buf"
      fail "nonempty: command '$@' exited $ex";
   fi
-  test -n "$buf" || { print_error "nonempty: got empty result while executing '$@'"; return 1; }
+  test -n "$buf" || { print_info "nonempty: got empty result while executing '$@'"; return 1; }
   echo $buf
 }
 
