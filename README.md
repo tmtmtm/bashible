@@ -11,16 +11,16 @@ but better structured with additional features.
 features:
 
   - skipping tasks which have already been done
-  - failed command stops the execution immediately
-  - calling another scripts easily (like dependencies)
-  - environment variables and script arguments used
-  - running tasks via sudo with environment variables preserved
-  - notifications (postponed script calling)
-  - script's working directory is always defined
-  - checking for empty values while setting variables
+  - a failed command halts the process
+  - dependencies (calling a script from a script)
+  - you can use environment variables and script arguments as usual
+  - running tasks via sudo plus preserving defined environment variables
+  - delayed script calling (do an action only once at the end)
+  - auto-chdir (the working directory is always predictable)
+  - safe setting variables (checking for empty values)
   - other helper functions (files editing, etc.)
 
-  At the moment it is used on Linux (Centos) only. May not work on other platforms (sed, netstat, etc. may behave differently).
+  At the moment it is used on Centos Linux only. May not work on other platforms (sed, netstat, etc. may behave differently).
 
   Suggestions and patches are welcome! :-)
 
@@ -123,7 +123,7 @@ timeout 20 bash -c '
  then
 
 ```bash
- bashible your-script.ble
+ ./bashible your-script.ble
 ```
 
 ## Functions
@@ -145,8 +145,8 @@ timeout 20 bash -c '
 [halt MESSAGE](docs/halt.md)  
 [halt_if COMMAND ARG1 ARG2 ...](docs/halt_if.md)  
 [force_call PATH ARG1 ARG2 ...](docs/force_call.md)  
-[i_am_child](docs/i_am_child.md)  
 [i_am](docs/i_am.md)  
+[i_am_child](docs/i_am_child.md)  
 [import PATH](docs/import.md)  
 [not COMMAND ARG1 ARG2 ...](docs/not.md)  
 [on HOST HOST ...](docs/on.md)  
@@ -178,4 +178,3 @@ timeout 20 bash -c '
 [uncomment_line_matching REGEXP PATH](docs/uncomment_line_matching.md)  
 [wait_for_tcp MATCH up|down](docs/wait_for_tcp.md)  
 [yum_install NAME NAME ...](docs/yum_install.md)  
-
