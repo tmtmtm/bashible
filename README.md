@@ -130,14 +130,8 @@ timeout 20 bash -c '
 ## Install & usage
 
 ```bash
- cd /usr/local/bin
  wget https://raw.githubusercontent.com/mig1984/bashible/master/bashible
  chmod 755 bashible
-```
-
- then
-
-```bash
  ./bashible your-script.ble ARG1 ARG2 ...
 ```
 

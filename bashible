@@ -211,7 +211,8 @@ nonempty() {
   local ex=$?
   if [ $ex != 0 ]; then
      echo "$buf"
-     fail "nonempty: command '$@' exited $ex";
+     print_error "nonempty: command '$@' exited $ex";
+     return $ex
   fi
   test -n "$buf" || { print_info "nonempty: got empty result while executing '$@'"; return 1; }
   echo $buf
@@ -337,6 +338,7 @@ append_line() {
 comment_line_matching() {
    local match="$1"
    local path="$2"
+   [ -z "$match" ] && { print_error "comment_line_matching: empty regexp is not allowed!"; return 1; }
    [ ! -f "$path" ] && { print_error "comment_line_matching: file '$path' not found"; return 1; }
    sed -i -r -e 's/^([^#]*'$match'.*)$/#\1/' "$path"
 }
@@ -380,6 +382,7 @@ prepend_line() {
 remove_line_matching() {
    local match="$1"
    local path="$2"
+   [ -z "$match" ] && { print_error "remove_line_matching: empty regexp is not allowed!"; return 1; }
    [ ! -f "$path" ] && { print_error "remove_line_matching: file '$path' not found"; return 1; }
    sed -i "\\$line\\d" "$path" || { print_error "remove_line_matching: can't edit file '$path'"; return 1; }
 }
@@ -388,6 +391,7 @@ replace_matching() {
    local match="$1"
    local replace="$2"
    local path="$3"
+   [ -z "$match" ] && { print_error "replace_matching: empty regexp is not allowed!"; return 1; }
    [ ! -f "$path" ] && { print_error "replace_matching: file '$path' not found"; return 1; }
    sed -i "s\\$match\\$replace\\g" "$path"
 }
@@ -396,6 +400,7 @@ replace_line_matching() {
    local match="$1"
    local replace="$2"
    local path="$3"
+   [ -z "$match" ] && { print_error "replace_line_matching: empty regexp is not allowed!"; return 1; }
    [ ! -f "$path" ] && { print_error "replace_line_matching: file '$path' not found"; return 1; }
    sed -i "s\\.*$match.*\\$replace\\g" "$path"
 }
@@ -427,6 +432,7 @@ timeout() {
 uncomment_line_matching() {
    local match="$1"
    local path="$2"
+   [ -z "$match" ] && { print_error "uncomment_line_matching: empty regexp is not allowed!"; return 1; }
    [ ! -f "$path" ] && { print_error "uncomment_line_matching: file '$path' not found"; return 1; }
    sed -i -r -e 's/^ *#(.*?'$match'.*)$/\1/' "$path"
 }
