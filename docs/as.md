@@ -16,7 +16,7 @@ export them using `export_var` command. By default, only the PATH variable is co
   - as www-data bundle install
 
 @ This should work
-  - as www-data echo '$DOMAIN'
+  - as www-data evaluate 'echo $DOMAIN'
 ```
 
 You can also run whole child script.ble as a different user,
