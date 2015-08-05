@@ -119,7 +119,7 @@ call() {
 }
 
 evaluate() {
-  eval "$@" || { var ex=$?; print_error "evaluate: command '$@' has failed (exit $ex)"; return $ex; }
+  eval "$@" || { local ex=$?; print_error "evaluate: command '$@' has failed (exit $ex)"; return $ex; }
 }
 
 export_var() {
