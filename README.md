@@ -10,19 +10,21 @@ but better structured with additional features.
 
 features:
 
-  - skipping tasks which have already been done
+  - chaining of bash functions and commands
+  - environment variables and script arguments can be used as usual
   - a failed command halts the process
+  - skipping tasks which have already been done
   - dependencies (calling a script from a script)
-  - you can use environment variables and script arguments as usual
-  - running tasks via sudo plus preserving defined environment variables
-  - delayed script calling (do an action only once at the end)
-  - auto-chdir (the working directory is always predictable)
-  - safe setting variables (checking for empty values)
-  - other helper functions (files editing, etc.)
+  - running tasks via sudo plus preserving environment variables over the sudo
+  - delayed script calling (an action is done only once at the very end)
+  - auto-chdir (the working directory is always the same)
+  - setting variables safe (checking whether they are not empty)
+  - does not re-implement The World (if you want a remote access, use ssh or pdsh, use bash for loops, etc.)
+  - helper functions (files editing, etc.)
 
-  At the moment it is used on Centos Linux only. May not work on other platforms (sed, netstat, etc. may behave differently).
+  At the moment it is used on the Centos Linux only. May not work on other platforms (sed, netstat, etc. may behave differently).
 
-  Suggestions and patches are welcome! :-)
+  Suggestions are welcome! :-)
 
 ## Example
 

@@ -1,6 +1,6 @@
 #### reset_base_dir PATH
 
-Sets a base directory to the original (the same directory as where the script.ble resides in).
+Sets a base directory to the original base dir (i.e. the same directory as where the script resides in).
 
 Example:
 

@@ -1,6 +1,6 @@
-##### finish MESSAGE
+##### finish [MESSAGE]
 
-Stops execution of the current bashible script. If it is called as a child script, the parent will continue.
+Stops the execution of the current bashible script, but parent scripts will continue (if called from a parent).
 
 ```bash
 @ Basic checks

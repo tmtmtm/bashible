@@ -1,11 +1,11 @@
-##### as USER COMMAND ...
+##### as USER COMMAND [ARG1] [ARG2] ...
 
-Run a command as another user. The sudo command in a non-login shell mode is used (the current working dir should stay the same).
+Runs a command as another user. Sudo in a non-login shell mode is used, so the current working directory should stay intouched.
 
-warning: 
+warning:
 
-Sudo usually cleans-up environment variables. Fortunately, there is a way to pass variables to the sudoed command - you have to
-export them using `export_var` command. By default, only the PATH variable is copied.
+The sudo usually cleans-up environment variables. Fortunately, there is a way to pass variables over the sudo, but you have to 
+register them using [export_var](export_var.md). By default, only PATH is copied.
 
 ```bash
 @ Setting some global variables
@@ -19,7 +19,7 @@ export them using `export_var` command. By default, only the PATH variable is co
   - as www-data evaluate 'echo $DOMAIN'
 ```
 
-You can also run whole child script.ble as a different user,
+You can also run the whole child script as a different user,
 
 ```bash
 @ Creating virtual host

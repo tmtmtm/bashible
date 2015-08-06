@@ -1,6 +1,6 @@
 ##### remove_line_matching REGEX PATH
 
-Remove line(s) matching regexp from the file.
+Removes line(s) from a file which match a regexp.
 
 ```bash
 @ Editing sshd_config

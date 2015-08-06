@@ -1,6 +1,6 @@
-##### finish_if COMMAND ARG1 ARG2
+##### finish_if COMMAND [ARG1] [ARG2] ...
 
-Stops execution of the current bashible script if an execute command returns nonzero exitcode.
+Stops the execution of the current bashible script if an execute command returns a nonzero exitcode; a parent script will continue (if called from parent).
 
 ```bash
 @ Basic checks

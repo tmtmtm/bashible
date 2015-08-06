@@ -1,7 +1,7 @@
-##### may_fail COMMAND ARG1 ARG2 ...
+##### may_fail COMMAND [ARG1] [ARG2] ...
 
-Normally if a command returns nonzero exitcode, execution of the script is stopped.
-Sometimes a failing task doesn't matter.
+Normally, if a command returns a nonzero exitcode, the execution of the script is halted.
+But sometimes the failing task doesn't mind,
 
 ```bash
 @ Cleaning up

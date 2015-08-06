@@ -1,6 +1,6 @@
 ##### set_contents CONTENTS PATH
 
-Write contents into a file (does nothing if already).
+Write contents into a file (and does nothing if it has been already found in there).
 
 ```bash
 @ Writing hostname

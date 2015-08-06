@@ -1,4 +1,4 @@
-##### fail MESSAGE
+##### fail [MESSAGE]
 
 Interrupts execution with a message displayed on stdout.
 

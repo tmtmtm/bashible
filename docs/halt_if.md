@@ -1,6 +1,6 @@
-##### halt_if COMMAND ARG1 ARG2 ...
+##### halt_if COMMAND [ARG1] [ARG2] ...
 
-If a command returns nonzero exitcode, stops the process immediately (including possible parent bashible scripts that called the current one).
+Stops the process immediately, including possible parents, but only if a command returns a nonzero exitcode.
 
 ```bash
 @ Basic checks

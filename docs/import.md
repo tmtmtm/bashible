@@ -1,11 +1,10 @@
 ##### import PATH
 
-Whenever you want to use "source", use "import" instead. It does the same, moreover remembers imported files.
-
-When a command is then run via sudo (`as`), all files will be re-sourced first (otherwise functions won't be reachable in the child process).
+Whenever you want to use "source", use "import" instead. The import does the same, moreover remembers imported files.
+It is good when running commands via sudo - [as](as.md) - all imported files will be re-sourced first, otherwise functions won't be reachable in the child process.
 
 ```bash
-import './variables.sh'
+import './my_functions.sh'
 
 @ Creating virtual host
   - call './create-virtual-host.ble' example.com

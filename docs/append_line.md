@@ -1,6 +1,6 @@
 ##### append_line LINE PATH
 
-Append a line to a file unless the line has been found in the end already.
+Appends a line to a file unless the line has been found in the end of the file already.
 
 ```bash
 @ Editing sshd_config

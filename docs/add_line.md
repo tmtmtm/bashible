@@ -1,6 +1,6 @@
 ##### add_line LINE PATH
 
-Add a line into the file unless the line has been found already (somewhere in the file).
+Add a line into a file unless the line has been aleady found somewhere in the file.
 
 ```bash
 @ Editing sshd_config

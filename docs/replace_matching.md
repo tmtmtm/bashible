@@ -1,6 +1,6 @@
 ##### replace_matching REGEXP STRING PATH
 
-Replace matching regexps in a file with a string.
+Replaces matching regexps with a string in a file.
 
 ```bash
 @ Editing sshd_config

@@ -1,8 +1,8 @@
-##### i_am NAME NAME ...
+##### i_am NAME [NAME2] ...
 
-Returns true if the current user ($USER) is listed.
+Returns true if the current user ($USER) is among listed users.
 
-In the following example, only user root is allowed:
+In the following example, only the user root is allowed:
 
 ```bash
 @ Basic checks

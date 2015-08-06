@@ -1,6 +1,6 @@
-##### force_call PATH ARG1 ARG2 ...
+##### force_call PATH [ARG1] [ARG2] ...
 
-Does `call` always (again even if already).
+Calls a bashible script always. (The usual [call](call.md) does it only once.)
 
 ```bash
 @ Making sure php is installed

@@ -1,10 +1,10 @@
-##### call PATH ARG1 ARG2 ...
+##### call PATH [ARG1] [ARG2] ...
 
-Call another bashile script. The script will run in a new process, therefore it won't affect the caller.
+Calls another bashile script. The script will run in a new process, therefore it won't affect the caller.
 
-The working directory of the called script is set to the same directory as the script resides in.
+The working directory of the called script will be set to the same directory as the another script resides in.
 
-Call doesn't run again if already (use `force_call` to bypass the check).
+The call function doesn't run twice unless you use [force_call](force_call.md) instead.
 
 ```bash
 @ Prerequisities

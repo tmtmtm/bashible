@@ -1,6 +1,6 @@
-##### unless 'EVALUATED STRING' COMMAND ARG1 ARG2 ...
+##### unless 'EVALUATED STRING' COMMAND [ARG1] [ARG2] ...
 
-Does the opposite to `when` - runs a command unless an evaluated string returns true.
+Does the opposite to `when`: runs a command unless an evaluated string returns true.
 
 ```bash
 @ Doing some checks
@@ -14,7 +14,7 @@ Does the opposite to `when` - runs a command unless an evaluated string returns 
   - unless '! test -f /etc/nginx/nginx.conf' skip
 ```
 
-You can also write more complex constructions,
+You can also use more complex constructions in the evaluated string,
 
 ```bash
 when 'test -d /etc/nginx && test -d /var/www' skip

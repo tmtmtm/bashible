@@ -1,10 +1,11 @@
-##### skip_if COMMAND ARG1 ARG2 ...
+##### skip_if COMMAND [ARG1] [ARG2] ...
 
-If a command returns nonzero exitcode, it skips following tasks until a next tasks block.
+Skips all tasks until a next block, but only if a following command returns a nonzero exitcode.
 
 ```bash
 @ Installing nginx
  - skip_if test -f /usr/local/bin/nginx
+ - rm -rf /etc/nginx
  - yum install nginx
 
 @ Installing php

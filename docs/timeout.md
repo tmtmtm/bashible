@@ -1,6 +1,6 @@
-##### timeout SECS COMMAND ...
+##### timeout SECS COMMAND [ARG1] [ARG2] ...
 
-Runs the command but fails if it lasts more than SECS.
+Runs a command and fails if it lasts more than SECS seconds.
 
 ```bash
 @ Start nginx service

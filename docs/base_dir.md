@@ -1,7 +1,7 @@
 #### base_dir PATH
 
-Sets a base directory. Every block of tasks resets the current working directory to the base.
-The default base directory is the same directory as where the script.ble resides in.
+Sets a base directory. On every block of tasks start, the current working directory is reset to this base dir.
+The default base directory is the same directory as where the script resides in.
 
 Example:
 

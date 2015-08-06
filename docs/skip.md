@@ -1,10 +1,11 @@
-##### skip MESSAGE
+##### skip [MESSAGE]
 
-Skips following tasks until a next tasks block.
+Skips all following tasks until a next block.
 
 ```bash
 @ Installing nginx
  - when 'test -f /usr/local/bin/nginx' skip "local nginx is already installed, skipping"
+ - rm -rf /etc/nginx
  - yum install nginx
 
 @ Installing php

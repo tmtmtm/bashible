@@ -2,6 +2,8 @@
 
 Waits for a listening tcp service to be up or down. Uses "netstat -ltn".
 
+warning: may not work on all platforms
+
 ```bash
 @ Stop nginx service
   - service nginx stop

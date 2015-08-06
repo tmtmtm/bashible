@@ -1,13 +1,13 @@
-##### set_var NAME COMMAND ARG1 ARG2 ... #####
+##### set_var NAME COMMAND [ARG1] [ARG2] ...
 
-Runs a command and stores it's output into an environment variable.
+Runs a command and stores it's output in an environment variable.
 
 ```bash
 @ Setting some variables
   - set_var DOMAIN nonempty cat /etc/domain.txt
 ```
 
-You can use chaining and put `nonempty` to fail if the command's output is empty.
+You can use chaining and [nonempty](nonempty.md) to check, whether the command's output is not empty.
 
 ##### See also
 

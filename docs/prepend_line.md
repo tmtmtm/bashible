@@ -1,6 +1,6 @@
 ##### prepend_line LINE FILE
 
-Prepend the file with a line unless already.
+Prepends a file with a line (unless already).
 
 ```bash
 @ Editing sshd_config

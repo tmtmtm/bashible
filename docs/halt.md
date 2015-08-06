@@ -1,6 +1,6 @@
-##### halt MESSAGE
+##### halt [MESSAGE]
 
-Stops the process immediately (including possible parent bashible scripts that called the current one).
+Stops the process immediately, including possible parents that have called the current script.
 
 ```bash
 @ Basic checks

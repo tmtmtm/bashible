@@ -1,6 +1,6 @@
 ##### comment_line_matching REGEXP PATH
 
-Prefix matching line(s) by '#' in the file.
+Prefixes matching line(s) by '#' in a given file.
 
 ```bash
 @ Editing sshd_config

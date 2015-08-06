@@ -1,6 +1,6 @@
-##### uncomment_line_matching REGEXP FILE
+##### uncomment_line_matching REGEXP PATH
 
-Removes '#' from the beginning of matching line(s) in the file.
+Removes '#' from the beginning of matching line(s) in a file.
 
 ```bash
 @ Editing sshd_config

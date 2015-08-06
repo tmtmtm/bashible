@@ -1,6 +1,8 @@
-##### yum_install NAME NAME ...
+##### yum_install NAME [NAME2] ...
 
-Installs a specified software unless already (the check is a bit dirty but quicker than calling `yum install`).
+Installs a specified software unless already (the check is dirty but quick).
+
+warning: this feature might be moved to a separate library in the future
 
 ```bash
 @ Installing prerequisities

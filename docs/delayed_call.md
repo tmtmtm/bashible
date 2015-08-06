@@ -1,8 +1,8 @@
 ##### delayed_call PATH
 
-The bashible script identified by PATH will be called only once at the end.
+Calls a bashible script once in the very end even if the delayed_call has been used multiple times.
 
-In the following example, two virtual hosts are generated, 
+In the following example, two virtual hosts will be generated, 
 but nginx will be reloaded only once afterwards.
 
 ```bash

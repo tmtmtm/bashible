@@ -1,6 +1,6 @@
 ##### replace_line_matching REGEXP STRING PATH
 
-Replace complete line with a string (on all lines where a matching regexp has been found).
+Replaces complete line(s) with a string in a file where a regexp has been found.
 
 ```bash
 @ Editing sshd_config

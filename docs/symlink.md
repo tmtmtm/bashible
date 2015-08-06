@@ -2,8 +2,7 @@
 
 Creates a symbolic link from SRC to DEST unless already.
 
-(warn: it's not so clever as the "ln -s", so you have to use 
-absolute path also in the DEST)
+(warning: both SRC and DEST must be absolute paths)
 
 ```bash
 @ Symlinking some files
