@@ -17,6 +17,5 @@ Does the opposite to `unless`: runs a command if an evaluated string returns tru
 You can also use more complex constructions in the evaluated string,
 
 ```bash
-when 'test -d /etc/nginx && test -d /var/www' skip
+  - when 'test -d /etc/nginx && test -d /var/www' skip
 ```
-

@@ -9,8 +9,9 @@ Stops the process immediately, including possible parents, but only if a command
 
 ##### See also
 
-[finish](finish.md)
-[finish_if](finish_if.md)
-[halt](halt.md)
-[skip](skip.md)
-[skip_if](skip_if.md)
+[fail](fail.md)  
+[finish](finish.md)  
+[finish_if](finish_if.md)  
+[halt](halt.md)  
+[skip](skip.md)  
+[skip_if](skip_if.md)  

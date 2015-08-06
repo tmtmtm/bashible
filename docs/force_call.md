@@ -9,8 +9,5 @@ Calls a bashible script always. (The usual [call](call.md) does it only once.)
 
 ##### See also
 
-[call](call.md)
-[delayed_call](delayed_call.md)
-
-
-
+[call](call.md)  
+[delayed_call](delayed_call.md)  

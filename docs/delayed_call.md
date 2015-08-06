@@ -17,5 +17,5 @@ but nginx will be reloaded only once afterwards.
 
 ##### See also
 
-[call](call.md)
-[force_call](force_call.md)
+[call](call.md)  
+[force_call](force_call.md)  

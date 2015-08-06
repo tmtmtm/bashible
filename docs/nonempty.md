@@ -13,5 +13,5 @@ A: Because if you mis-type 'empty' (e.g. empyt), the `not` function wouldn't fai
 
 ##### See also
 
-[evaluates](evaluate.md)
-[set_var](set_var.md)
+[evaluates](evaluate.md)  
+[set_var](set_var.md)  

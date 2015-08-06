@@ -9,4 +9,4 @@ If a file is empty, write a contents into it. If the contents has been already f
 
 ##### See also
 
-[set_contents](set_contents.md)
+[set_contents](set_contents.md)  

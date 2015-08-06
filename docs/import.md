@@ -12,4 +12,4 @@ import './my_functions.sh'
 
 ##### See also
 
-[as](as.md)
+[as](as.md)  

@@ -17,5 +17,5 @@ The call function doesn't run twice unless you use [force_call](force_call.md) i
 
 ##### See also
 
-[force_call](force_call.md)
-[delayed_call](delayed_call.md)
+[force_call](force_call.md)  
+[delayed_call](delayed_call.md)  

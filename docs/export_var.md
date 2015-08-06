@@ -14,6 +14,6 @@ You can use chaining and put [nonempty](nonempty.md) to check whether the comman
 
 ##### See also
 
-[set_var](set_var.md)
-[as](as.md)
+[set_var](set_var.md)  
+[as](as.md)  
 

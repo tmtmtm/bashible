@@ -8,3 +8,7 @@ warning: this feature might be moved to a separate library in the future
 @ Installing prerequisities
   - yum_install rsync vsftpd nginx
 ```
+
+##### See also
+
+[rpm_is_installed](rpm_is_installed.md)..

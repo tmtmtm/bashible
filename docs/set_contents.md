@@ -9,4 +9,4 @@ Write contents into a file (and does nothing if it has been already found in the
 
 ##### See also
 
-[set_contents_safe](set_contents_safe.md)
+[set_contents_safe](set_contents_safe.md)  

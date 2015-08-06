@@ -7,3 +7,7 @@ Prepends a file with a line (unless already).
   - prepend_line 'UseDNS no;' /etc/ssh/sshd_config
 ```
 
+##### See also
+
+[add_line](add_line.md)  
+[append_line](append_line.md)  

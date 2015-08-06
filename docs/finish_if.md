@@ -9,8 +9,9 @@ Stops the execution of the current bashible script if an execute command returns
 
 ##### See also
 
-[finish](finish.md)
-[halt](halt.md)
-[halt_if](halt_if.md)
-[skip](skip.md)
-[skip_if](skip_if.md)
+[fail](fail.md)  
+[finish](finish.md)  
+[halt](halt.md)  
+[halt_if](halt_if.md)  
+[skip](skip.md)  
+[skip_if](skip_if.md)  

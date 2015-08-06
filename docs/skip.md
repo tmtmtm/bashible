@@ -14,8 +14,9 @@ Skips all following tasks until a next block.
 
 ##### See also
 
-[finish](finish.md)
-[finish_if](finish_if.md)
-[halt](halt.md)
-[halt_if](halt_if.md)
-[skip_if](skip_if.md)
+[fail](fail.md)  
+[finish](finish.md)  
+[finish_if](finish_if.md)  
+[halt](halt.md)  
+[halt_if](halt_if.md)  
+[skip_if](skip_if.md)  

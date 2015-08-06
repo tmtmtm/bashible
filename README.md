@@ -8,7 +8,7 @@ Tools like Puppet, Chef or Ansible are sometimes too heavy to do simple things. 
 to be difficult to read and full of unhandled failures. Bashible stays somewhere in the middle: a bashible script is just a bash script,
 but better structured with additional features.
 
-features:
+Features:
 
   - chaining of bash functions and commands
   - environment variables and script arguments can be used as usual
@@ -160,7 +160,7 @@ timeout 20 bash -c '
 [i_am_child](docs/i_am_child.md)  
 [import PATH](docs/import.md)  
 [not COMMAND ARG1 ARG2 ...](docs/not.md)  
-[on HOST HOST ...](docs/on.md)  
+[on HOST HOST2 ...](docs/on.md)  
 [may_fail COMMAND ARG1 ARG2 ...](docs/may_fail.md)  
 [quiet COMMAND ARG1 ARG2 ...](docs/quiet.md)  
 [reset_base_dir](docs/reset_base_dir.md)  
@@ -176,7 +176,7 @@ timeout 20 bash -c '
 [add_line LINE PATH](docs/add_line.md)  
 [append_line LINE PATH](docs/append_line.md)  
 [comment_line_matching REGEXP PATH](docs/comment_line_matching.md)  
-[install_gem NAME NAME ...](docs/install_gem.md)  
+[install_gem NAME NAME2 ...](docs/install_gem.md)  
 [prepend_line LINE PATH](docs/prepend_line.md)  
 [remove_line_matching REGEX PATH](docs/remove_line_matching.md)  
 [replace_line_matching REGEXP STRING PATH](docs/replace_line_matching.md)  
@@ -188,4 +188,4 @@ timeout 20 bash -c '
 [timeout SECS COMMAND ARG1 ARG2 ...](docs/timeout.md)  
 [uncomment_line_matching REGEXP PATH](docs/uncomment_line_matching.md)  
 [wait_for_tcp MATCH up|down](docs/wait_for_tcp.md)  
-[yum_install NAME NAME ...](docs/yum_install.md)  
+[yum_install NAME NAME2 ...](docs/yum_install.md)  

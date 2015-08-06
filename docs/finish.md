@@ -9,8 +9,9 @@ Stops the execution of the current bashible script, but parent scripts will cont
 
 ##### See also
 
-[finish_if](finish_if.md)
-[halt](halt.md)
-[halt_if](halt_if.md)
-[skip](skip.md)
-[skip_if](skip_if.md)
+[fail](fail.md)  
+[finish_if](finish_if.md)  
+[halt](halt.md)  
+[halt_if](halt_if.md)  
+[skip](skip.md)  
+[skip_if](skip_if.md)  
