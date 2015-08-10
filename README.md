@@ -36,6 +36,7 @@ A bashible script.ble (scripts should have the .ble extension):
   - on host3 host4
   - i_am root
   - call ./system_base.ble
+  - not empty echo $1
 
 @ Setting up some variables
   - set_var FQDN not empty hostname

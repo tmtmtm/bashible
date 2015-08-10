@@ -2,10 +2,11 @@
 
 Runs a following command and negates it's exit status.
 
-Warning: this function is dangerous; if you execute a non existent command (mis-typed),
-it will always results into true!
-
 ```bash
+@ Basic checks
+  - not empty echo $1
+  - not empty cat /etc/passwd
+ 
 @ Installing cron.d files unless already
   - skip_if not test -d /etc/cron.d/
   - cp /shared/cron.d/* /etc/cron.d
