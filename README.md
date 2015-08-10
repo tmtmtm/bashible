@@ -38,12 +38,12 @@ A bashible script.ble (scripts should have the .ble extension):
   - call ./system_base.ble
 
 @ Setting up some variables
-  - set_var FQDN nonempty hostname
-  - set_var DOMAIN2 nonempty evaluate "echo $FQDN | awk -F . '{ print \$(NF-1) \".\" \$NF }' "
+  - set_var FQDN not empty hostname
+  - set_var DOMAIN2 not empty evaluate "echo $FQDN | awk -F . '{ print \$(NF-1) \".\" \$NF }' "
   # expects an ip address to be passed as the first argument to the script
   - set_var MY_IP echo $1
   # expects a public key to be passed on stdout
-  - set_var PUBLIC_KEY nonempty cat
+  - set_var PUBLIC_KEY not empty cat
 
 @ Adding user webuser and his public key
   - may_fail useradd webuser

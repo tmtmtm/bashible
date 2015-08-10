@@ -4,12 +4,12 @@ Runs a command and stores it's output in an environment variable.
 
 ```bash
 @ Setting some variables
-  - set_var DOMAIN nonempty cat /etc/domain.txt
+  - set_var DOMAIN not empty cat /etc/domain.txt
 ```
-
-You can use chaining and [nonempty](nonempty.md) to check, whether the command's output is not empty.
 
 ##### See also
 
+[empty](empty.md)  
 [export_var](export_var.md)  
+[not](not.md)  
 

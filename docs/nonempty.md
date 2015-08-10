@@ -1,5 +1,7 @@
 ##### nonempty COMMAND [ARG1] [ARG2] ...
 
+warning: deprecated; use "not empty" instead (see [empty](empty.md) )
+
 Runs the command and returns false if it's output is empty. Also returns false if the command has failed.
 
 ```bash
@@ -8,10 +10,8 @@ Runs the command and returns false if it's output is empty. Also returns false i
   - set_var FOO nonempty echo $BAR
 ```
 
-Q: Why there's no function `empty` instead? It might be used as `not empty`?
-A: Because if you mis-type 'empty' (e.g. empyt), the `not` function wouldn't fail. Therefore nonempty is more safe.
-
 ##### See also
 
+[empty](empty.md)  
 [evaluate](evaluate.md)  
 [set_var](set_var.md)  

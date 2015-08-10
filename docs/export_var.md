@@ -7,13 +7,13 @@ It's important, because the sudo usually clears environment variables.
 
 ```bash
 @ Setting some variables
-  - export_var DOMAIN nonempty cat /etc/domain.txt
+  - export_var DOMAIN not empty cat /etc/domain.txt
 ```
-
-You can use chaining and put [nonempty](nonempty.md) to check whether the command's output is not empty.
 
 ##### See also
 
-[set_var](set_var.md)  
 [as](as.md)  
+[empty](empty.md)  
+[not](not.md)  
+[set_var](set_var.md)  
 
