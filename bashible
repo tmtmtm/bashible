@@ -262,7 +262,7 @@ quiet() {
    "$@" >/dev/null 2>&1
 }
 
-reset_BASE_DIR() {
+reset_base_dir() {
   _BASE_DIR="${_ORIG_BASE_DIR}"
 }
 
