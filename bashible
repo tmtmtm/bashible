@@ -222,7 +222,7 @@ import() {
 }
 
 i_am_child() {
-  test "${_BLE_LEVEL}" -gt 1
+  test "${_BLE_LEVEL}" -ge 1
 }
 
 may_fail() {
