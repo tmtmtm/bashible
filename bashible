@@ -18,16 +18,16 @@ help() {
 # searches an array for an element; used internally
 containsElement() {
   local e
-  for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
+  for e in "${@:2}"; do
+    test "$e" = "$1" && return 0
+  done
   return 1
 }
 
 # export preserved variables
 preserveEnvironment() {
   IFS=':'; for i in ${_PRESERVED}; do
-     if [ -n "$i" ]; then
-        export "$i"
-     fi
+     test ${#i} -gt 0 && export "$i"
   done
   IFS=$' \t\n'
 }
@@ -35,61 +35,63 @@ preserveEnvironment() {
 # build _ENVREPEAT array
 buildENVREPEAT() {
   _ENVREPEAT=()
-  _ENVREPEAT[0]="env"
+  _ENVREPEAT[0]=env
   local cnt=1
   IFS=':'; for i in ${_PRESERVED}; do
-     IFS=$' \t\n'
-     if [ -n "$i" ]; then
-        _ENVREPEAT["$cnt"]="$i=`eval echo \\$$i`"
-        let cnt=cnt+1
-     fi
+    IFS=$' \t\n'
+    if test ${#i} -gt 0 ; then
+      _ENVREPEAT["$cnt"]="$i=`eval echo \\$$i`"
+      let cnt=cnt+1
+    fi
   done
   #echo "${_ENVREPEAT[@]}"
 }
 
 printStart() {
-    echo -e "\n\033[1;37;45m ${_BLE_NAV} \033[1;37;44m START \033[0m" >&2
+  echo -e "\n\033[1;37;45m ${_BLE_NAV} \033[1;37;44m START \033[0m" >&2
 }
 
 printBlock() {
-    echo -e "\n\033[1;37;45m ${_BLE_NAV} \033[1;37;44m $* \033[0m" >&2
+  echo -e "\n\033[1;37;45m ${_BLE_NAV} \033[1;37;44m $* \033[0m" >&2
 }
 
 printFinish() {
-    echo -e "\n\033[1;37;45m ${_BLE_NAV} \033[1;37;44m FINISH \033[0m" >&2
+  echo -e "\n\033[1;37;45m ${_BLE_NAV} \033[1;37;44m FINISH \033[0m" >&2
 }
 
 printTask() {
-    echo -e "\033[37m - $* \033[0m" >&2
+  echo -e "\033[37m - $* \033[0m" >&2
 }
 
 printError() {
-    echo -e "   \033[31m($*)\033[0m" >&2
+  echo -e "   \033[31m($*)\033[0m" >&2
 }
 
 printWarn() {
-    echo -e "   \033[31m($*)\033[0m" >&2
+  echo -e "   \033[31m($*)\033[0m" >&2
 }
 
 printInfo() {
-    echo -e "   \033[32m($*)\033[0m" >&2
+  echo -e "   \033[32m($*)\033[0m" >&2
 }
 
 runScript() {
   local cmd=$1
   shift # shift the script name, pass other args as $1, $2, etc.
+
   local path=`readlink -e "$cmd"` # get absolute path
-  if [ -z "$path" ]; then
-    fail "is the script '$cmd' correct? (got an empty path on readlink)"
-  fi
+  test ${#path} -gt 0 || fail "is the script '$cmd' correct? (got an empty path on readlink)"
+
   _BASE_DIR=`dirname "$path"`
   _ORIG_BASE_DIR=${_BASE_DIR}
   echo "$path $@" >> "${_BLE_CALLED}" || fail "can't write to _BLE_CALLED file (${_BLE_CALLED})"
-  if [ -z "${_BLE_NAV}" ]; then
+
+  if test ${#_BLE_NAV} -eq 0 ; then
     _BLE_NAV="`basename $path | sed "s/\.ble\$//" `"
   else
     _BLE_NAV="${_BLE_NAV} -> `basename $path | sed "s/\.ble\$//" `"
   fi
+
   printStart
   cd "${_BASE_DIR}" || fail "can't enter base dir '${_BASE_DIR}'"
   source ./`basename "$path"` || fail "failure in $path (in $PWD)"
@@ -99,35 +101,35 @@ runScript() {
 ### CORE FUNCTIONS ###
 
 @() {
-   _BLOCKS_STARTED=1
-   _SKIP=0
-   cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
-   printBlock $*
+  _BLOCKS_STARTED=1
+  _SKIP=0
+  cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
+  printBlock $*
 }
 
 -() {
-   if [ "${_SKIP}" != 1 ]; then
-     printTask $*
-     "$@" || fail "command '$@' failed (in `pwd`)";
-   fi
+  if test "${_SKIP}" -ne 1 ; then
+    printTask $*
+    "$@" || fail "command '$@' failed (in `pwd`)";
+  fi
 }
 
 as() {
-   local user=$1; shift
-   local orig_nav=$_BLE_NAV
-   local ex
-   export _BLE_NAV="${_BLE_NAV} (as $user)"
-   buildENVREPEAT
-   # login shell (-i) can't be used, otherwise it would chdir to homedir
-   # and relative paths would behave unexpectedly
-   sudo -u "$user" "${_ENVREPEAT[@]}" "${_BASHIBLE}" -- "$@" ; ex=$?
-   _BLE_NAV=$orig_nav
-   return $ex
+  local user=$1; shift
+  local orig_nav=$_BLE_NAV
+  local ex
+  export _BLE_NAV="${_BLE_NAV} (as $user)"
+  buildENVREPEAT
+  # login shell (-i) can't be used, otherwise it would chdir to homedir
+  # and relative paths would behave unexpectedly
+  sudo -u "$user" "${_ENVREPEAT[@]}" "${_BASHIBLE}" -- "$@" ; ex=$?
+  _BLE_NAV=$orig_nav
+  return $ex
 }
 
 base_dir() {
   _BASE_DIR=`readlink -e "$1"` # get absolute path
-  if [ -z "${_BASE_DIR}" ]; then
+  if test ${#_BASE_DIR} -eq 0; then
     fail "base_dir: readlink -e '$1' failed"
   fi
   cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
@@ -137,26 +139,24 @@ call() {
   local script=$1
   shift
   local path=`readlink -e "$script"` # get absolute path
-  if [ -z "$path" ]; then
-    fail "is the path of call '$script' correct at that place? (got empty path on readlink)"
-  fi
+  test ${#path} -gt 0 || fail "is the path of call '$script' correct? (got empty path on readlink)"
   if ! grep -q "$path $@" "${_BLE_CALLED}"; then
     force_call "$path" "$@"
   fi
 }
 
 empty() {
-  quiet type "$1" || fail "empty: command '$1' not found"
+  quiet type $1 || fail "empty: command '$1' not found"
   local buf
   eval "
     buf=\"\`  \"\$@\"  \`\"
   "
   local ex=$?
-  echo "$buf"
-  if [ $ex != 0 ]; then
-     fail "empty: command '$@' exited $ex";
+  echo $buf
+  if test $ex -gt 0; then
+    fail "empty: command '$@' exited $ex"
   fi
-  test -z "$buf"  # is returned
+  test ${#buf} -eq 0 # is returned
 }
 
 evaluate() {
@@ -164,19 +164,20 @@ evaluate() {
 }
 
 export_var() {
- quiet type "$1" || fail "export_var: command '$1' not found"
- local ex
- set_var "$@"
- local name=$1; shift
- eval "
+  local name=$1
+  if test ${#2} -gt 0; then
+    quiet type $2 || fail "export_var: command '$2' not found"
+    set_var "$@"
+  fi
+  eval "
     _PRESERVED=\"\${_PRESERVED}\$$name:\"
     export $name
- "
+  "
 }
 
 fail() {
-   echo -e "\n\033[1;37;45m ${_BLE_NAV} \033[1;37;41m $*, exiting \033[0m" >&2
-   exit 1
+  echo -e "\n\033[1;37;45m ${_BLE_NAV} \033[1;37;41m $*, exiting \033[0m" >&2
+  exit 1
 }
 
 finish() {
@@ -186,7 +187,7 @@ finish() {
 }
 
 finish_if() {
- quiet type "$1" || fail "finish_if: command '$1' not found"
+  quiet type $1 || fail "finish_if: command '$1' not found"
   "$@" && finish || return 0
 }
 
@@ -194,10 +195,10 @@ force_call() {
   local script=$1
   shift # shift the script name, pass other args as $1, $2, etc.
   local path=`readlink -e "$script"` # get absolute path
-  if [ -z "$path" ]; then
+  if test ${#path} -eq 0 ; then
     fail "is the path of called script '$script' correct? (got empty path on readlink)"
   fi
-  _BLE_LEVEL=$((_BLE_LEVEL + 1)) ${_BASHIBLE} "$path" || exit 1
+  _BLE_LEVEL=$((_BLE_LEVEL + 1)) "${_BASHIBLE}" "$path" "$@" || exit 1
 }
 
 
@@ -208,45 +209,45 @@ halt() {
 }
 
 halt_if() {
-  quiet type "$1" || fail "halt_if: command '$1' not found"
+  quiet type $1 || fail "halt_if: command '$1' not found"
   "$@" && halt || return 0
 }
 
 import() {
-   local path=`readlink -e "$1"` # get absolute path
-   if ! echo "${_IMPORTED}" | grep ":$path:"; then
-      _IMPORTED="${_IMPORTED}$path:"
-      source "$path"
-   fi
+  local path=`readlink -e "$1"` # get absolute path
+  if ! grep ":$path:" <<< "${_IMPORTED}"; then
+    _IMPORTED="${_IMPORTED}${path}:"
+    source "$path"
+  fi
 }
 
 i_am_child() {
-  [ "${_BLE_LEVEL}" -gt 1 ]
+  test "${_BLE_LEVEL}" -gt 1
 }
 
 may_fail() {
-  quiet type "$1" || fail "may_fail: command '$1' not found"
+  quiet type $1 || fail "may_fail: command '$1' not found"
   "$@"
   return 0
 }
 
 # deprecated; use "not empty" instead
 nonempty() {
-  quiet type "$1" || fail "nonempty: command '$1' not found"
+  quiet type $1 || fail "nonempty: command '$1' not found"
   local buf
   eval "
     buf=\"\`  \"\$@\"  \`\" 
   "
   local ex=$?
-  echo "$buf"
-  if [ $ex != 0 ]; then
+  echo $buf
+  if test $ex -gt 0 ; then
      fail "nonempty: command '$@' exited $ex";
   fi
-  test -n "$buf" # is returned
+  test ${#buf} -gt 0  # is returned
 }
 
 not() {
-  quiet type "$1" || fail "not: command '$1' not found"
+  quiet type $1 || fail "not: command '$1' not found"
   "$@" && return 1 || return 0
 }
 
@@ -255,29 +256,26 @@ delayed_call() {
 }
 
 on() {
-   containsElement "${_HOSTNAME}" "$@"
+  containsElement "${_HOSTNAME}" "$@"
 }
 
 quiet() {
-   "$@" >/dev/null 2>&1
+  "$@" >/dev/null 2>&1
 }
 
 reset_base_dir() {
-  _BASE_DIR="${_ORIG_BASE_DIR}"
+  _BASE_DIR=${_ORIG_BASE_DIR}
 }
 
 set_var() {
- local name=$1; shift
- local value;
- if [ -n "$*" ]; then
-   quiet type "$1" || fail "set_var: command '$1' not found"
-   value=`  "$@"  `
-   if [ $? != 0 ]; then
-     fail "set_var: command '$@' has failed"
-   fi
-   printInfo "$name=$value"
-   eval "$name=\$value"
- fi
+  local name=$1; shift
+  local value;
+  quiet type "$1" || fail "set_var: command '$1' not found"
+  if ! value=`  "$@"  `; then
+    fail "set_var: command '$@' has failed"
+  fi
+  printInfo "$name=$value"
+  eval "$name=\$value"
 }
 
 skip() {
@@ -291,156 +289,165 @@ skip_if() {
 }
 
 tags() {
-   local ary=($TAGS);
-   [ "${#ary[@]}" -eq 0 ] && return  # no tags given, continue normally
+  local ary=($TAGS);
+  test ${#ary[@]} -eq 0 && return  # no tags given, continue normally
 
-   for tag in $@; do
-     if containsElement "$tag" "${ary[@]}"; then
-       return 0
-     fi
-   done
+  for tag in $@; do
+    if containsElement "$tag" "${ary[@]}"; then
+      return 0
+    fi
+  done
 
-   printWarn "does not match tags"
-   return 1
+  printWarn "does not match tags"
+  return 1
 }
 
 when() {
-   if eval "$1"; then
-      shift
-      "$@"
-   fi
+  if eval "$1"; then
+    shift
+    "$@"
+  fi
 }
 
 unless() {
-   if ! eval "$1"; then
-      shift
-      "$@"
-   fi
+  if ! eval "$1"; then
+    shift
+    "$@"
+  fi
 }
 
 
 ### USEFUL HELPERS ###
 
 set_contents() {
-   local contents="$1"
-   local path="$2"
-   [ ! -w "$path" ] && { printError "set_contents: file '$path' is not writable or doesn't exist"; return 1; }
-   local current="` cat "$path" `"
-   [ $? != 0 ] && { printError "set_contents: can't read file '$path'"; return 1; }
-   [ -s "$path" -a "$contents" = "$current" ] && return 0
-   echo "$contents" > "$path"
+  local contents=$1
+  local path=$2
+  test -w "$path" || { printError "set_contents: file '$path' is not writable or doesn't exist"; return 1; }
+  if ! local current="` cat "$path" `"; then
+    printError "set_contents: can't read file '$path'"
+    return 1
+  fi
+  if test -s "$path" -a "$contents" = "$current"; then
+    return 0
+  fi
+  echo "$contents" > "$path"
 }
 
 set_contents_safe() {
-   local contents="$1"
-   local path="$2"
-   [ ! -w "$path" ] && { printError "set_contents_safe: file '$path' is not writable or doesn't exist"; return 1; }
-   local current="` cat "$path" `"
-   [ $? != 0 ] && { printError "set_contents_safe: can't read file '$path'"; return 1; }
-   [ -s "$path" -a "$contents" != "$current" ] && { printError "set_contents_safe: file '$path' already contains something else"; return 1; }
-   echo "$contents" > "$path"
+  local contents=$1
+  local path=$2
+  test -w "$path" || { printError "set_contents_safe: file '$path' is not writable or doesn't exist"; return 1; }
+  if ! local current="` cat "$path" `"; then
+    printError "set_contents_safe: can't read file '$path'"
+    return 1
+  fi
+  if test -s "$path" -a "$contents" != "$current"; then
+    printError "set_contents_safe: file '$path' already contains something else"
+    return 1
+  fi
+  echo "$contents" > "$path"
 }
 
 add_line() {
-   local line="$1"
-   local path="$2"
-   quiet head -n 1 "$path" || { printError "add_line: can't read file '$path'"; return 1; }
-   if ! quiet grep -F "$line" "$path"; then
-     echo "$line" >> "$path" || { printError "add_line: can't write to file '$path'"; return 1; }
-   else
-     printInfo "already"
-   fi
+  local line=$1
+  local path=$2
+  quiet head -n 1 "$path" || { printError "add_line: can't read file '$path'"; return 1; }
+  if ! quiet grep -F "$line" "$path"; then
+    echo "$line" >> "$path" || { printError "add_line: can't write to file '$path'"; return 1; }
+  else
+    printInfo "already"
+  fi
 }
 
 append_line() {
-   local line="$1"
-   local path="$2"
-   quiet tail -n 1 "$path" || { printError "append_line: can't read file '$path'"; return 1; }
-   if [ "` tail -n 1 "$path" `" != "$line" ]; then
-     echo "$line" >> "$path" || { printError "append_line: can't write to file '$path'"; return 1; }
-   else
-     printInfo "already"
-   fi
+  local line=$1
+  local path=$2
+  quiet tail -n 1 "$path" || { printError "append_line: can't read file '$path'"; return 1; }
+  if test "` tail -n 1 "$path" `" != "$line" ; then
+    echo "$line" >> "$path" || { printError "append_line: can't write to file '$path'"; return 1; }
+  else 
+    printInfo "already"
+  fi
 }
 
 comment_line_matching() {
-   local match="$1"
-   local path="$2"
-   [ -z "$match" ] && { printError "comment_line_matching: empty regexp is not allowed!"; return 1; }
-   [ ! -f "$path" ] && { printError "comment_line_matching: file '$path' not found"; return 1; }
-   sed -i -r -e 's/^([^#]*'$match'.*)$/#\1/' "$path"
+  local match=$1
+  local path=$2
+  test ${#match} -eq 0 && { printError "comment_line_matching: empty regexp is not allowed!"; return 1; }
+  test ! -f "$path" && { printError "comment_line_matching: file '$path' not found"; return 1; }
+  sed -i -r -e 's/^([^#]*'$match'.*)$/#\1/' "$path"
 }
 
 i_am() {
-   containsElement "${USER}" "$@"
+  containsElement "${USER}" "$@"
 }
 
 install_gem() {
-   while [ -n "$1" ]; do
-     if ! gem list "$1" | grep -q -e "^$1 "; then
-       gem install "$1" || { printError "install_gem: can't install gem"; return 1; }
-     else
-       printInfo "already"
-     fi
-     shift
-   done
+  while test ${#1} -gt 0 ; do
+    if ! gem list "$1" | grep -q -e "^$1 "; then
+      gem install "$1" || { printError "install_gem: can't install gem"; return 1; }
+    else
+      printInfo "already"
+    fi
+    shift
+  done
 }
 
 rpm_is_installed() {
-   for i in `rpm -q "$1"`; do
-      version="${i##$1}"
-      if echo "$version" | egrep -q -e "^-[0-9]"; then
-        return 0
-      fi
-   done
-   return 1
+  for i in `rpm -q "$1"`; do
+    version="${i##$1}"
+    if egrep -q -e "^-[0-9]" <<< "$version"; then
+      return 0
+    fi
+  done
+  return 1
 }
 
 prepend_line() {
-   local line="$1"
-   local path="$2"
-   quiet head -n 1 "$path" || { printError "prepend_line: can't read file '$path'"; return 1; }
-   if [ "` head -n 1 "$path" `" != "$line" ]; then
-     sed -i "1i $line" "$path" || { printError "prepend_line: can't edit file '$path'"; return 1; }
-   else
-     printInfo "already"
-   fi
+  local line=$1
+  local path=$2
+  quiet head -n 1 "$path" || { printError "prepend_line: can't read file '$path'"; return 1; }
+  if test "` head -n 1 "$path" `" != "$line" ; then
+    sed -i "1i $line" "$path" || { printError "prepend_line: can't edit file '$path'"; return 1; }
+  else
+    printInfo "already"
+  fi
 }
 
 remove_line_matching() {
-   local match="$1"
-   local path="$2"
-   [ -z "$match" ] && { printError "remove_line_matching: empty regexp is not allowed!"; return 1; }
-   [ ! -f "$path" ] && { printError "remove_line_matching: file '$path' not found"; return 1; }
-   sed -i "\\$line\\d" "$path" || { printError "remove_line_matching: can't edit file '$path'"; return 1; }
+  local match=$1
+  local path=$2
+  test ${#match} -eq 0 && { printError "remove_line_matching: empty regexp is not allowed!"; return 1; }
+  test ! -f "$path" && { printError "remove_line_matching: file '$path' not found"; return 1; }
+  sed -i "\\$line\\d" "$path" || { printError "remove_line_matching: can't edit file '$path'"; return 1; }
 }
 
 replace_matching() {
-   local match="$1"
-   local replace="$2"
-   local path="$3"
-   [ -z "$match" ] && { printError "replace_matching: empty regexp is not allowed!"; return 1; }
-   [ ! -f "$path" ] && { printError "replace_matching: file '$path' not found"; return 1; }
-   sed -i "s\\$match\\$replace\\g" "$path"
+  local match=$1
+  local replace=$2
+  local path=$3
+  test ${#match} -eq 0 && { printError "replace_matching: empty regexp is not allowed!"; return 1; }
+  test ! -f "$path" && { printError "replace_matching: file '$path' not found"; return 1; }
+  sed -i "s\\$match\\$replace\\g" "$path"
 }
 
 replace_line_matching() {
-   local match="$1"
-   local replace="$2"
-   local path="$3"
-   [ -z "$match" ] && { printError "replace_line_matching: empty regexp is not allowed!"; return 1; }
-   [ ! -f "$path" ] && { printError "replace_line_matching: file '$path' not found"; return 1; }
-   sed -i "s\\.*$match.*\\$replace\\g" "$path"
+  local match=$1
+  local replace=$2
+  local path=$3
+  test ${#match} -eq 0 && { printError "replace_line_matching: empty regexp is not allowed!"; return 1; }
+  test ! -f "$path" && { printError "replace_line_matching: file '$path' not found"; return 1; }
+  sed -i "s\\.*$match.*\\$replace\\g" "$path"
 }
 
 symlink() {
   local src=$1
   local dest=$2
-  if test -L "$2"; then
+  if test -L "$2" ; then
     local curr="`readlink "$2"`"
-    if [ "$curr" != "$1" ]; then
-       printError "symlink exists already, but points to different location: $curr (should $2)"
-       return 1
+    if test "$curr" != "$1" ; then
+      printError "symlink exists already, but points to different location: $curr (should $2)"
+      return 1
     fi
     printInfo "already"
   else
@@ -449,71 +456,69 @@ symlink() {
 }
 
 timeout() {
-   local time=$1; shift
-   preserveEnvironment
-   if ! /usr/bin/env timeout "$time" "${_BASHIBLE}" -- "$@"; then
-      printError "timeout expired"
-      return 1
-   fi
+  local time=$1; shift
+  preserveEnvironment
+  if ! /usr/bin/env timeout "$time" "${_BASHIBLE}" -- "$@"; then
+    printError "timeout expired"
+    return 1
+  fi
 }
 
 uncomment_line_matching() {
-   local match="$1"
-   local path="$2"
-   [ -z "$match" ] && { printError "uncomment_line_matching: empty regexp is not allowed!"; return 1; }
-   [ ! -f "$path" ] && { printError "uncomment_line_matching: file '$path' not found"; return 1; }
-   sed -i -r -e 's/^ *#(.*?'$match'.*)$/\1/' "$path"
+  local match=$1
+  local path=$2
+  test ${#match} -eq 0 && { printError "uncomment_line_matching: empty regexp is not allowed!"; return 1; }
+  test ! -f "$path" && { printError "uncomment_line_matching: file '$path' not found"; return 1; }
+  sed -i -r -e 's/^ *#(.*?'$match'.*)$/\1/' "$path"
 }
 
 wait_for_tcp() {
-  local what="$1"
-  local up="$2"
-  if [ "$up" = up ]; then
-     while ! netstat -lnt | grep "$what" | grep -q 'LISTEN'; do sleep 1; done
-  elif [ "$up" = down ]; then
-     while netstat -lnt | grep "$what" | grep -q 'LISTEN'; do sleep 1; done
+  local what=$1
+  local up=$2
+  if test "$up" = up ; then
+    while ! netstat -lnt | grep "$what" | grep -q 'LISTEN'; do sleep 1; done
+  elif test "$up" = down ; then
+    while netstat -lnt | grep "$what" | grep -q 'LISTEN'; do sleep 1; done
   else
-     fail "wait for '$up'? (expected up|down)"
+    fail "wait for '$up'? (expected up|down)"
   fi
   return 0
 }
 
 yum_install() {
-   while [ -n "$1" ]; do
-     if ! rpm_is_installed "$1"; then
-        printInfo "$1 seems to be not installed yet"
-        yum install -y "$1" || { printError "yum_install: can't install $1"; return 1; }
-     else
-        printInfo "$1 already"
-     fi
-     shift
-   done
+  while test ${#1} -gt 0 ; do
+    if ! rpm_is_installed "$1"; then
+      printInfo "$1 seems to be not installed yet"
+      yum install -y "$1" || { printError "yum_install: can't install $1"; return 1; }
+    else
+      printInfo "$1 already"
+    fi
+    shift
+  done
 }
 
 #### START #####
 
 # setup environment variables; these and other prefixed with _BLE (see below) are passed to child (called) scripts
 
-if [ -z "${_BLE_LEVEL}" ]; then
-   _BLE_LEVEL=0                   # >1 indicates a child script
-fi
+let _BLE_LEVEL=${_BLE_LEVEL}+0    # >1 indicates a child script
 export _BLE_LEVEL
 export _BLE_NAV                   # navigation; is set in the parent, not here
 
 # setup variables (these are per script only)
 
 _BASHIBLE=`readlink -e "$0"` # the bashible script itself
-[ -z "${_BASHIBLE}" ] && fail "can't get _BASHIBLE; is 'readlink' command present?"
+test ${#_BASHIBLE} -gt 0 || fail "can't get _BASHIBLE; is 'readlink' command present?"
 _ENVREPEAT=()                # used for copying preserved environment variables over sudo or a command
 _HOSTNAME=`hostname`
 _IMPORTED=':'                # imported files (re-sourced after sudo)
-[ -z "${_HOSTNAME}" ] && fail "got no hostname"
+test ${#_HOSTNAME} -gt 0 || fail "got no hostname"
 _PRESERVED='PATH:TAGS:_IMPORTED:_BLE_CALLED:_BLE_DELAYED:_BLE_LEVEL:_BLE_NAV' # preserved env variables; _PRESERVED itself is not preserved, must be explicitly declared in every script
 _SKIP=0                      # skipping mode? reseted on next block
 _BASE_DIR=''                 # will be set by runScript
 _ORIG_BASE_DIR=''            # will be set by runScript
 
-if [ "$1" = "--" ]; then
+if test "$1" = "--" ; then
 
   # I'm called internally to run a command (via sudo or timeout)
 
@@ -521,9 +526,9 @@ if [ "$1" = "--" ]; then
 
   # first re-import all imported files
   IFS=':'; for i in ${_IMPORTED}; do
-     if [ -n "$i" ]; then
-        source "$i" || fail "problem while re-importing $i"
-     fi
+    if test ${#i} -gt 0 ; then
+      source "$i" || fail "problem while re-importing $i"
+    fi
   done
   IFS=$' \t\n'
 
@@ -531,22 +536,22 @@ if [ "$1" = "--" ]; then
   # (built by the preserveEnvironment)
   "$@"
 
-elif [ "$1" = -h -o "$1" = --help ]; then
+elif test "$1" = -h -o "$1" = --help ; then
 
   help
 
-elif [ -n "$1" -a "${_BLE_LEVEL}" = 0 ]; then
+elif test ${#1} -gt 0 -a "${_BLE_LEVEL}" = 0 ; then
 
   # a script path is passed as the first argument and this is the top script
 
   if quiet which tempfile; then
-     export _BLE_DELAYED=`tempfile`    # will be called at the end
-     export _BLE_CALLED=`tempfile`    # already called playbooks
+    export _BLE_DELAYED=`tempfile`    # will be called at the end
+    export _BLE_CALLED=`tempfile`    # already called playbooks
   else
-     export _BLE_DELAYED=/tmp/bashible-$$.delayed
-     export _BLE_CALLED=/tmp/bashible-$$.called
-     touch "${_BLE_DELAYED}" || fail "can't touch ${_BLE_DELAYED}"
-     touch "${_BLE_CALLED}" || fail "can't touch ${_BLE_CALLED}"
+    export _BLE_DELAYED=/tmp/bashible-$$.delayed
+    export _BLE_CALLED=/tmp/bashible-$$.called
+    touch "${_BLE_DELAYED}" || fail "can't touch ${_BLE_DELAYED}"
+    touch "${_BLE_CALLED}" || fail "can't touch ${_BLE_CALLED}"
   fi
 
   # run the script (and pass extra parameters, too)
@@ -555,14 +560,14 @@ elif [ -n "$1" -a "${_BLE_LEVEL}" = 0 ]; then
   # at the end call delayed commands (the call doesn't do them twice even if they are multiple times in the file)
   export _BLE_NAV='DELAYED'
   while read path; do
-     call "$path"
+    call "$path"
   done < "${_BLE_DELAYED}"
 
   # cleanup
   rm "${_BLE_CALLED}"
   rm "${_BLE_DELAYED}"
 
-elif [ -n "$1" ]; then
+elif test ${#1} -gt 0 ; then
 
   # a script path is passed as the first argument and this is a child script
 
