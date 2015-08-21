@@ -17,6 +17,7 @@ Features:
   - dependencies (calling a script from a script)
   - running tasks via sudo plus preserving environment variables over the sudo
   - delayed script calling (an action is done only once at the very end)
+  - simple template engine (in Bash :-))
   - auto-chdir (the working directory is always the same)
   - setting variables safe (checking whether they are not empty)
   - does not re-implement The World (if you want a remote access, use ssh or pdsh, use bash for loops, etc.)
@@ -169,6 +170,7 @@ timeout 20 bash -c '
 [skip MESSAGE](docs/skip.md)  
 [skip_if COMMAND ARG1 ARG2 ...](docs/skip_if.md)  
 [tags TAG TAG ...](docs/tags.md)  
+[template TEMPLATE_PATH RESULT_PATH](docs/template.md)  
 [unless 'EVALUATED STRING' COMMAND ARG1 ARG2 ...](docs/unless.md)  
 [when 'EVALUATED STRING' COMMAND ARG1 ARG2 ...](docs/when.md)  
 

@@ -1,3 +1,10 @@
+1.0.2 -> 1.0.3
+  - templating engine (see 'template' function)
+  - 'empty' echoes multiline as multiline (bugfix)
+  - printing tasks fixed (multiline echoed as multiline)
+  - removed unnecessary IFS maniplation
+  - fixed import function behaviour (not propagated to called scripts)
+
 1.0.1 -> 1.0.2
   - speed improvements (using bash builtins)
   - fixed bugs in passing arguments to a called script (in force_call)

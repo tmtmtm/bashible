@@ -26,10 +26,9 @@ containsElement() {
 
 # export preserved variables
 preserveEnvironment() {
-  IFS=':'; for i in ${_PRESERVED}; do
-     test ${#i} -gt 0 && export "$i"
-  done
-  IFS=$' \t\n'
+  while read -d : var; do
+    test ${#var} -gt 0 && export "$var"
+  done <<< ${_PRESERVED}
 }
 
 # build _ENVREPEAT array
@@ -37,13 +36,12 @@ buildENVREPEAT() {
   _ENVREPEAT=()
   _ENVREPEAT[0]=env
   local cnt=1
-  IFS=':'; for i in ${_PRESERVED}; do
-    IFS=$' \t\n'
-    if test ${#i} -gt 0 ; then
-      _ENVREPEAT["$cnt"]="$i=`eval echo \\$$i`"
+  while read -d : var; do
+    if test ${#var} -gt 0 ; then
+      _ENVREPEAT["$cnt"]="$var=`eval echo \\$$var`"
       let cnt=cnt+1
     fi
-  done
+  done <<< ${_PRESERVED}
   #echo "${_ENVREPEAT[@]}"
 }
 
@@ -104,12 +102,12 @@ runScript() {
   _BLOCKS_STARTED=1
   _SKIP=0
   cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
-  printBlock $*
+  printBlock "$*"
 }
 
 -() {
   if test "${_SKIP}" -ne 1 ; then
-    printTask $*
+    printTask "$*"
     "$@" || fail "command '$@' failed (in `pwd`)";
   fi
 }
@@ -122,7 +120,7 @@ as() {
   buildENVREPEAT
   # login shell (-i) can't be used, otherwise it would chdir to homedir
   # and relative paths would behave unexpectedly
-  sudo -u "$user" "${_ENVREPEAT[@]}" "${_BASHIBLE}" -- "$@" ; ex=$?
+  sudo -u "$user" "${_ENVREPEAT[@]}" "_BLE_IMPORTED=${_BLE_IMPORTED}" "${_BASHIBLE}" -- "$@" ; ex=$?
   _BLE_NAV=$orig_nav
   return $ex
 }
@@ -152,7 +150,7 @@ empty() {
     buf=\"\`  \"\$@\"  \`\"
   "
   local ex=$?
-  echo $buf
+  echo "$buf"
   if test $ex -gt 0; then
     fail "empty: command '$@' exited $ex"
   fi
@@ -201,7 +199,6 @@ force_call() {
   _BLE_LEVEL=$((_BLE_LEVEL + 1)) "${_BASHIBLE}" "$path" "$@" || exit 1
 }
 
-
 halt() {
   printError "halting execution$@"
   printFinish
@@ -215,8 +212,8 @@ halt_if() {
 
 import() {
   local path=`readlink -e "$1"` # get absolute path
-  if ! grep ":$path:" <<< "${_IMPORTED}"; then
-    _IMPORTED="${_IMPORTED}${path}:"
+  if ! grep ":$path:" <<< "${_BLE_IMPORTED}"; then
+    _BLE_IMPORTED="${_BLE_IMPORTED}${path}:"
     source "$path"
   fi
 }
@@ -239,7 +236,7 @@ nonempty() {
     buf=\"\`  \"\$@\"  \`\" 
   "
   local ex=$?
-  echo $buf
+  echo "$buf"
   if test $ex -gt 0 ; then
      fail "nonempty: command '$@' exited $ex";
   fi
@@ -300,6 +297,23 @@ tags() {
 
   printWarn "does not match tags"
   return 1
+}
+
+template() {
+  local path=$1
+  local res=$2
+  local orig_nav=${_BLE_NAV}
+  (
+    export _BLE_NAV="${_BLE_NAV} (in $path)"
+    exec 3>&1
+    set -u
+    stderr=` eval "
+cat <<END_OF_BLEMPLATE
+$(< "${path}" )
+END_OF_BLEMPLATE" </dev/stdin 2>&1 1>&3
+`
+    test "${#stderr}" -eq 0 || { echo $stderr; printError "template '$path' failed"; return 1; }
+  ) > $res
 }
 
 when() {
@@ -506,14 +520,12 @@ export _BLE_LEVEL
 export _BLE_NAV                   # navigation; is set in the parent, not here
 
 # setup variables (these are per script only)
-
 _BASHIBLE=`readlink -e "$0"` # the bashible script itself
 test ${#_BASHIBLE} -gt 0 || fail "can't get _BASHIBLE; is 'readlink' command present?"
 _ENVREPEAT=()                # used for copying preserved environment variables over sudo or a command
 _HOSTNAME=`hostname`
-_IMPORTED=':'                # imported files (re-sourced after sudo)
 test ${#_HOSTNAME} -gt 0 || fail "got no hostname"
-_PRESERVED='PATH:TAGS:_IMPORTED:_BLE_CALLED:_BLE_DELAYED:_BLE_LEVEL:_BLE_NAV' # preserved env variables; _PRESERVED itself is not preserved, must be explicitly declared in every script
+_PRESERVED='PATH:TAGS:_BLE_CALLED:_BLE_DELAYED:_BLE_LEVEL:_BLE_NAV:' # preserved env variables; _PRESERVED itself is not preserved, must be explicitly declared in every script
 _SKIP=0                      # skipping mode? reseted on next block
 _BASE_DIR=''                 # will be set by runScript
 _ORIG_BASE_DIR=''            # will be set by runScript
@@ -525,12 +537,11 @@ if test "$1" = "--" ; then
   shift
 
   # first re-import all imported files
-  IFS=':'; for i in ${_IMPORTED}; do
-    if test ${#i} -gt 0 ; then
-      source "$i" || fail "problem while re-importing $i"
+  while read -d : imp; do
+    if test ${#imp} -gt 0 ; then
+      source "$imp" || fail "problem while re-importing $imp"
     fi
-  done
-  IFS=$' \t\n'
+  done <<< ${_BLE_IMPORTED}
 
   # finally run the command; environment variables are included in the command
   # (built by the preserveEnvironment)
@@ -542,11 +553,13 @@ elif test "$1" = -h -o "$1" = --help ; then
 
 elif test ${#1} -gt 0 -a "${_BLE_LEVEL}" = 0 ; then
 
+  _BLE_IMPORTED=''                 # imported files (re-sourced after sudo); shouldn't be set here, but...
+
   # a script path is passed as the first argument and this is the top script
 
   if quiet which tempfile; then
-    export _BLE_DELAYED=`tempfile`    # will be called at the end
-    export _BLE_CALLED=`tempfile`    # already called playbooks
+    export _BLE_DELAYED=`tempfile` # will be called at the end
+    export _BLE_CALLED=`tempfile`  # already called playbooks
   else
     export _BLE_DELAYED=/tmp/bashible-$$.delayed
     export _BLE_CALLED=/tmp/bashible-$$.called
@@ -568,6 +581,8 @@ elif test ${#1} -gt 0 -a "${_BLE_LEVEL}" = 0 ; then
   rm "${_BLE_DELAYED}"
 
 elif test ${#1} -gt 0 ; then
+
+  _BLE_IMPORTED=''                # imported files (re-sourced after sudo); shouldn't be set here, but...
 
   # a script path is passed as the first argument and this is a child script
 
