@@ -531,9 +531,9 @@ _SKIP=0                      # skipping mode? reseted on next block
 _BASE_DIR=''                 # will be set by runScript
 _ORIG_BASE_DIR=''            # will be set by runScript
 
-if test "$1" = "--" ; then
 
-  # I'm called internally to run a command (via sudo or timeout)
+# Used internally to run a command (via sudo or timeout)
+if test "$1" = "--" ; then
 
   shift
 
@@ -548,11 +548,23 @@ if test "$1" = "--" ; then
   # (built by the preserveEnvironment)
   "$@"
 
-elif test "$1" = -h -o "$1" = --help ; then
+  exit $?
+fi
 
+# Help?
+if test "$1" = -h -o "$1" = --help ; then
   help
+  exit 0
+fi
 
-elif test ${#1} -gt 0 -a "${_BLE_LEVEL}" = 0 ; then
+# No script passed?
+if test ${#1} -eq 0; then
+  help
+  exit 1
+fi
+
+# Finally run the script!
+if test "${_BLE_LEVEL}" = 0 ; then
 
   _BLE_IMPORTED=''                 # imported files (re-sourced after sudo); shouldn't be set here, but...
 
@@ -581,7 +593,7 @@ elif test ${#1} -gt 0 -a "${_BLE_LEVEL}" = 0 ; then
   rm "${_BLE_CALLED}"
   rm "${_BLE_DELAYED}"
 
-elif test ${#1} -gt 0 ; then
+else
 
   _BLE_IMPORTED=''                # imported files (re-sourced after sudo); shouldn't be set here, but...
 
@@ -589,9 +601,5 @@ elif test ${#1} -gt 0 ; then
 
   # run the script (and pass extra parameters, too)
   runScript "$@"
-
-else
-
-  help
 
 fi
