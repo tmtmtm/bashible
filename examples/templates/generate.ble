@@ -1,0 +1,5 @@
+FOO_OR_BAR=foo
+#FOO_OR_BAR=bar
+
+@ Calling template
+- template html.tpl
