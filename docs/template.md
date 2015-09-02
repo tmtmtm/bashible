@@ -1,6 +1,6 @@
-##### template TEMPLATE_PATH RESULT_PATH
+##### template TEMPLATE_PATH [RESULT_PATH]
 
-Implements a very simple Bash templating engine. You can use it for substituting variables.
+Implements a very simple Bash templating engine. You can use it for substituting variables. If RESULT_PATH is ommited, defaults to /dev/stdout.
 
 Example:
 
@@ -64,4 +64,19 @@ sort-buffer-size = $( echo $SORT_BUFFER_SIZE )
 max-join-size = 512M
 max-heap-table-size = 128M
 ...
+```
+
+---
+
+Or you can call another templates from a template,
+
+```html
+<html>
+  <head>
+     $( template head.tpl )
+  </head>
+  <body>
+     $( template body.tpl )
+  </body>
+</htm>
 ```
