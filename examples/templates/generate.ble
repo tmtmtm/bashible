@@ -1,5 +1,8 @@
+#!/usr/bin/env bashible
+
+# this variable is used to include either foo.js or bar.js in the HTML head (see parts/head.tpl template)
 FOO_OR_BAR=foo
 #FOO_OR_BAR=bar
 
-@ Calling template
-- template html.tpl
+@ Building the HTML from a template
+- template index.tpl

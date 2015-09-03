@@ -2,6 +2,8 @@ use:
 
 $ bashible generate.ble
 
-or to save the contents into a file
+or save the contents into a file
 
 $ bashible generate.ble 2>/dev/null > output.html
+
+(You can also chmod the generate.ble executable and run it via shebang.)
