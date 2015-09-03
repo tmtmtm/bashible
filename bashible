@@ -302,7 +302,7 @@ tags() {
 template() {
   local path=$1
   local res
-  test "$#" -gt 2 && res=$2 || res=/dev/stdout
+  test "$#" -ge 2 && res=$2 || res=/dev/stdout
   local orig_nav=${_BLE_NAV}
   (
     export _BLE_NAV="${_BLE_NAV} (in $path)"
