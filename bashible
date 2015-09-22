@@ -61,17 +61,6 @@ printTask() {
   echo -e "\033[37m - $* \033[0m" >&2
 }
 
-printError() {
-  echo -e "   \033[31m($*)\033[0m" >&2
-}
-
-printWarn() {
-  echo -e "   \033[31m($*)\033[0m" >&2
-}
-
-printInfo() {
-  echo -e "   \033[32m($*)\033[0m" >&2
-}
 
 runScript() {
   local cmd=$1
@@ -158,7 +147,7 @@ empty() {
 }
 
 evaluate() {
-  eval "$@" || { local ex=$?; printInfo "evaluate: warning: command '$@' exited $ex"; return $ex; }
+  eval "$@" || { local ex=$?; print_info "evaluate: warning: command '$@' exited $ex"; return $ex; }
 }
 
 export_var() {
@@ -179,7 +168,7 @@ fail() {
 }
 
 finish() {
-  printInfo "finishing execution of the script$@"
+  print_info "finishing execution of the script$@"
   printFinish
   exit 0
 }
@@ -200,7 +189,7 @@ force_call() {
 }
 
 halt() {
-  printError "halting execution$@"
+  print_error "halting execution$@"
   printFinish
   exit 1
 }
@@ -256,6 +245,18 @@ on() {
   containsElement "${_HOSTNAME}" "$@"
 }
 
+print_error() {
+  echo -e "   \033[31m($*)\033[0m" >&2
+}
+
+print_warn() {
+  echo -e "   \033[31m($*)\033[0m" >&2
+}
+
+print_info() {
+  echo -e "   \033[32m($*)\033[0m" >&2
+}
+
 quiet() {
   "$@" >/dev/null 2>&1
 }
@@ -271,12 +272,12 @@ set_var() {
   if ! value=`  "$@"  `; then
     fail "set_var: command '$@' has failed"
   fi
-  printInfo "$name=$value"
+  print_info "$name=$value"
   eval "$name=\$value"
 }
 
 skip() {
-  printInfo "skipping following tasks$@"
+  print_info "skipping following tasks$@"
   _SKIP=1
 }
 
@@ -309,7 +310,7 @@ cat <<END_OF_BLEMPLATE
 $(< "${path}" )
 END_OF_BLEMPLATE" </dev/stdin 2>&1 1>&3
 `
-    test "${#stderr}" -eq 0 || { echo $stderr; printError "template '$path' failed"; return 1; }
+    test "${#stderr}" -eq 0 || { echo $stderr; print_error "template '$path' failed"; return 1; }
   ) > $res
 }
 
@@ -333,9 +334,9 @@ unless() {
 set_contents() {
   local contents=$1
   local path=$2
-  test -w "$path" || { printError "set_contents: file '$path' is not writable or doesn't exist"; return 1; }
+  test -w "$path" || { print_error "set_contents: file '$path' is not writable or doesn't exist"; return 1; }
   if ! local current="` cat "$path" `"; then
-    printError "set_contents: can't read file '$path'"
+    print_error "set_contents: can't read file '$path'"
     return 1
   fi
   if test -s "$path" -a "$contents" = "$current"; then
@@ -347,13 +348,13 @@ set_contents() {
 set_contents_safe() {
   local contents=$1
   local path=$2
-  test -w "$path" || { printError "set_contents_safe: file '$path' is not writable or doesn't exist"; return 1; }
+  test -w "$path" || { print_error "set_contents_safe: file '$path' is not writable or doesn't exist"; return 1; }
   if ! local current="` cat "$path" `"; then
-    printError "set_contents_safe: can't read file '$path'"
+    print_error "set_contents_safe: can't read file '$path'"
     return 1
   fi
   if test -s "$path" -a "$contents" != "$current"; then
-    printError "set_contents_safe: file '$path' already contains something else"
+    print_error "set_contents_safe: file '$path' already contains something else"
     return 1
   fi
   echo "$contents" > "$path"
@@ -362,30 +363,30 @@ set_contents_safe() {
 add_line() {
   local line=$1
   local path=$2
-  quiet head -n 1 "$path" || { printError "add_line: can't read file '$path'"; return 1; }
+  quiet head -n 1 "$path" || { print_error "add_line: can't read file '$path'"; return 1; }
   if ! quiet grep -F "$line" "$path"; then
-    echo "$line" >> "$path" || { printError "add_line: can't write to file '$path'"; return 1; }
+    echo "$line" >> "$path" || { print_error "add_line: can't write to file '$path'"; return 1; }
   else
-    printInfo "already"
+    print_info "already"
   fi
 }
 
 append_line() {
   local line=$1
   local path=$2
-  quiet tail -n 1 "$path" || { printError "append_line: can't read file '$path'"; return 1; }
+  quiet tail -n 1 "$path" || { print_error "append_line: can't read file '$path'"; return 1; }
   if test "` tail -n 1 "$path" `" != "$line" ; then
-    echo "$line" >> "$path" || { printError "append_line: can't write to file '$path'"; return 1; }
+    echo "$line" >> "$path" || { print_error "append_line: can't write to file '$path'"; return 1; }
   else 
-    printInfo "already"
+    print_info "already"
   fi
 }
 
 comment_line_matching() {
   local match=$1
   local path=$2
-  test ${#match} -eq 0 && { printError "comment_line_matching: empty regexp is not allowed!"; return 1; }
-  test ! -f "$path" && { printError "comment_line_matching: file '$path' not found"; return 1; }
+  test ${#match} -eq 0 && { print_error "comment_line_matching: empty regexp is not allowed!"; return 1; }
+  test ! -f "$path" && { print_error "comment_line_matching: file '$path' not found"; return 1; }
   sed -i -r -e 's/^([^#]*'$match'.*)$/#\1/' "$path"
 }
 
@@ -396,9 +397,9 @@ i_am() {
 install_gem() {
   while test ${#1} -gt 0 ; do
     if ! gem list "$1" | grep -q -e "^$1 "; then
-      gem install "$1" || { printError "install_gem: can't install gem"; return 1; }
+      gem install "$1" || { print_error "install_gem: can't install gem"; return 1; }
     else
-      printInfo "already"
+      print_info "already"
     fi
     shift
   done
@@ -417,28 +418,28 @@ rpm_is_installed() {
 prepend_line() {
   local line=$1
   local path=$2
-  quiet head -n 1 "$path" || { printError "prepend_line: can't read file '$path'"; return 1; }
+  quiet head -n 1 "$path" || { print_error "prepend_line: can't read file '$path'"; return 1; }
   if test "` head -n 1 "$path" `" != "$line" ; then
-    sed -i "1i $line" "$path" || { printError "prepend_line: can't edit file '$path'"; return 1; }
+    sed -i "1i $line" "$path" || { print_error "prepend_line: can't edit file '$path'"; return 1; }
   else
-    printInfo "already"
+    print_info "already"
   fi
 }
 
 remove_line_matching() {
   local match=$1
   local path=$2
-  test ${#match} -eq 0 && { printError "remove_line_matching: empty regexp is not allowed!"; return 1; }
-  test ! -f "$path" && { printError "remove_line_matching: file '$path' not found"; return 1; }
-  sed -i "\\$line\\d" "$path" || { printError "remove_line_matching: can't edit file '$path'"; return 1; }
+  test ${#match} -eq 0 && { print_error "remove_line_matching: empty regexp is not allowed!"; return 1; }
+  test ! -f "$path" && { print_error "remove_line_matching: file '$path' not found"; return 1; }
+  sed -i "\\$line\\d" "$path" || { print_error "remove_line_matching: can't edit file '$path'"; return 1; }
 }
 
 replace_matching() {
   local match=$1
   local replace=$2
   local path=$3
-  test ${#match} -eq 0 && { printError "replace_matching: empty regexp is not allowed!"; return 1; }
-  test ! -f "$path" && { printError "replace_matching: file '$path' not found"; return 1; }
+  test ${#match} -eq 0 && { print_error "replace_matching: empty regexp is not allowed!"; return 1; }
+  test ! -f "$path" && { print_error "replace_matching: file '$path' not found"; return 1; }
   sed -i "s\\$match\\$replace\\g" "$path"
 }
 
@@ -446,8 +447,8 @@ replace_line_matching() {
   local match=$1
   local replace=$2
   local path=$3
-  test ${#match} -eq 0 && { printError "replace_line_matching: empty regexp is not allowed!"; return 1; }
-  test ! -f "$path" && { printError "replace_line_matching: file '$path' not found"; return 1; }
+  test ${#match} -eq 0 && { print_error "replace_line_matching: empty regexp is not allowed!"; return 1; }
+  test ! -f "$path" && { print_error "replace_line_matching: file '$path' not found"; return 1; }
   sed -i "s\\.*$match.*\\$replace\\g" "$path"
 }
 
@@ -457,12 +458,12 @@ symlink() {
   if test -L "$2" ; then
     local curr="`readlink "$2"`"
     if test "$curr" != "$1" ; then
-      printError "symlink exists already, but points to different location: $curr (should $2)"
+      print_error "symlink exists already, but points to different location: $curr (should $2)"
       return 1
     fi
-    printInfo "already"
+    print_info "already"
   else
-    ln -s "$1" "$2" || { printError "can't create symlink"; return 1; }
+    ln -s "$1" "$2" || { print_error "can't create symlink"; return 1; }
   fi
 }
 
@@ -470,7 +471,7 @@ timeout() {
   local time=$1; shift
   preserveEnvironment
   if ! /usr/bin/env timeout "$time" "${_BASHIBLE}" -- "$@"; then
-    printError "timeout expired"
+    print_error "timeout expired"
     return 1
   fi
 }
@@ -478,8 +479,8 @@ timeout() {
 uncomment_line_matching() {
   local match=$1
   local path=$2
-  test ${#match} -eq 0 && { printError "uncomment_line_matching: empty regexp is not allowed!"; return 1; }
-  test ! -f "$path" && { printError "uncomment_line_matching: file '$path' not found"; return 1; }
+  test ${#match} -eq 0 && { print_error "uncomment_line_matching: empty regexp is not allowed!"; return 1; }
+  test ! -f "$path" && { print_error "uncomment_line_matching: file '$path' not found"; return 1; }
   sed -i -r -e 's/^ *#(.*?'$match'.*)$/\1/' "$path"
 }
 
@@ -499,10 +500,10 @@ wait_for_tcp() {
 yum_install() {
   while test ${#1} -gt 0 ; do
     if ! rpm_is_installed "$1"; then
-      printInfo "$1 seems to be not installed yet"
-      yum install -y "$1" || { printError "yum_install: can't install $1"; return 1; }
+      print_info "$1 seems to be not installed yet"
+      yum install -y "$1" || { print_error "yum_install: can't install $1"; return 1; }
     else
-      printInfo "$1 already"
+      print_info "$1 already"
     fi
     shift
   done
