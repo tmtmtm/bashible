@@ -132,6 +132,7 @@ call() {
   fi
 }
 
+
 empty() {
   quiet type $1 || fail "empty: command '$1' not found"
   local buf
@@ -263,6 +264,12 @@ quiet() {
 
 reset_base_dir() {
   _BASE_DIR=${_ORIG_BASE_DIR}
+}
+
+set_default() {
+  local var=$1
+  local val=$2
+  eval "quiet echo \${$var:=$val}"
 }
 
 set_var() {
