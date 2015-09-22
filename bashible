@@ -292,7 +292,6 @@ tags() {
       return 0
     fi
   done
-  printWarn "does not match tags"
   return 1
 }
 
