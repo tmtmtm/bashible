@@ -287,14 +287,11 @@ skip_if() {
 
 tags() {
   local ary=($TAGS);
-  test ${#ary[@]} -eq 0 && return  # no tags given, continue normally
-
   for tag in $@; do
     if containsElement "$tag" "${ary[@]}"; then
       return 0
     fi
   done
-
   printWarn "does not match tags"
   return 1
 }
