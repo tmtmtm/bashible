@@ -16,4 +16,4 @@ It's important, because the sudo usually clears environment variables.
 [empty](empty.md)  
 [not](not.md)  
 [set_var](set_var.md)  
-
+[var_empty](var_empty.md)  

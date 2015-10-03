@@ -1,3 +1,12 @@
+1.0.3 -> 1.0.4
+  - tags() doesn't return true if no $TAGS are set; therefore you can use it like this:
+    - echo ${TAGS:=all}  # value of $TAGS defaults to "all" unless set
+    - skip_if not tags compile install clean all
+    - skip_if tags no-download
+    etc.
+  - internal functions printInfo, printWarn, printError renamed to print_info, print_warn, print_error
+  - added var_empty function
+
 1.0.2 -> 1.0.3
   - templating engine (see 'template' function)
   - 'empty' echoes multiline as multiline (bugfix)

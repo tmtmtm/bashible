@@ -164,6 +164,9 @@ timeout 20 bash -c '
 [not COMMAND ARG1 ARG2 ...](docs/not.md)  
 [on HOST HOST2 ...](docs/on.md)  
 [may_fail COMMAND ARG1 ARG2 ...](docs/may_fail.md)  
+[print_error MSG](docs/print_error.md)
+[print_info MSG](docs/print_info.md)
+[print_warn MSG](docs/print_warn.md)
 [quiet COMMAND ARG1 ARG2 ...](docs/quiet.md)  
 [reset_base_dir](docs/reset_base_dir.md)  
 [set_var NAME COMMAND ARG1 ARG2 ...](docs/set_var.md)  
@@ -172,6 +175,7 @@ timeout 20 bash -c '
 [tags TAG TAG ...](docs/tags.md)  
 [template TEMPLATE_PATH RESULT_PATH](docs/template.md)  
 [unless 'EVALUATED STRING' COMMAND ARG1 ARG2 ...](docs/unless.md)  
+[var_empty NAME](docs/var_empty.md)
 [when 'EVALUATED STRING' COMMAND ARG1 ARG2 ...](docs/when.md)  
 
 ### Other functions

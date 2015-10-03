@@ -12,4 +12,4 @@ Runs a command and stores it's output in an environment variable.
 [empty](empty.md)  
 [export_var](export_var.md)  
 [not](not.md)  
-
+[var_empty](var_empty.md)  

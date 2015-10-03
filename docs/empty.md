@@ -13,3 +13,4 @@ Runs the command and returns true if it's output is empty.
 [not](not.md)  
 [evaluate](evaluate.md)  
 [set_var](set_var.md)  
+[var_empty](var_empty.md)  
