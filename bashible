@@ -4,10 +4,9 @@
 # (c) Jan Molic 2015
 # https://github.com/mig1984/bashible
 
-
 ### INTERNAL FUNCTIONS (CAMEL CASE) ####
 
-help() {
+bashibleHelp() {
   echo "usage: bashible script.ble"
   echo
   echo "see also: https://github.com/mig1984/bashible"
@@ -266,7 +265,6 @@ reset_base_dir() {
   _BASE_DIR=${_ORIG_BASE_DIR}
 }
 
-
 set_var() {
   local name=$1; shift
   local value;
@@ -328,6 +326,7 @@ when() {
   fi
 }
 
+
 unless() {
   if ! eval "$1"; then
     shift
@@ -338,34 +337,6 @@ unless() {
 
 ### USEFUL HELPERS ###
 
-set_contents() {
-  local contents=$1
-  local path=$2
-  test -w "$path" || { print_error "set_contents: file '$path' is not writable or doesn't exist"; return 1; }
-  if ! local current="` cat "$path" `"; then
-    print_error "set_contents: can't read file '$path'"
-    return 1
-  fi
-  if test -s "$path" -a "$contents" = "$current"; then
-    return 0
-  fi
-  echo "$contents" > "$path"
-}
-
-set_contents_safe() {
-  local contents=$1
-  local path=$2
-  test -w "$path" || { print_error "set_contents_safe: file '$path' is not writable or doesn't exist"; return 1; }
-  if ! local current="` cat "$path" `"; then
-    print_error "set_contents_safe: can't read file '$path'"
-    return 1
-  fi
-  if test -s "$path" -a "$contents" != "$current"; then
-    print_error "set_contents_safe: file '$path' already contains something else"
-    return 1
-  fi
-  echo "$contents" > "$path"
-}
 
 add_line() {
   local line=$1
@@ -459,6 +430,35 @@ replace_line_matching() {
   sed -i "s\\.*$match.*\\$replace\\g" "$path"
 }
 
+set_contents() {
+  local contents=$1
+  local path=$2
+  test -w "$path" || { print_error "set_contents: file '$path' is not writable or doesn't exist"; return 1; }
+  if ! local current="` cat "$path" `"; then
+    print_error "set_contents: can't read file '$path'"
+    return 1
+  fi
+  if test -s "$path" -a "$contents" = "$current"; then
+    return 0
+  fi
+  echo "$contents" > "$path"
+}
+
+set_contents_safe() {
+  local contents=$1
+  local path=$2
+  test -w "$path" || { print_error "set_contents_safe: file '$path' is not writable or doesn't exist"; return 1; }
+  if ! local current="` cat "$path" `"; then
+    print_error "set_contents_safe: can't read file '$path'"
+    return 1
+  fi
+  if test -s "$path" -a "$contents" != "$current"; then
+    print_error "set_contents_safe: file '$path' already contains something else"
+    return 1
+  fi
+  echo "$contents" > "$path"
+}
+
 symlink() {
   local src=$1
   local dest=$2
@@ -504,6 +504,18 @@ wait_for_tcp() {
   return 0
 }
 
+write_to() {
+  local path=$1; shift
+  local value;
+  quiet type "$1" || fail "write_to: command '$1' not found"
+  if ! value=`  "$@"  `; then
+    fail "write_to: command '$@' has failed"
+  fi
+  if ! echo $value > $path; then
+    fail "write_to: write failed"
+  fi
+}
+
 yum_install() {
   while test ${#1} -gt 0 ; do
     if ! rpm_is_installed "$1"; then
@@ -517,6 +529,9 @@ yum_install() {
 }
 
 #### START #####
+
+# when using "cat foobar | while read line", it will fail if the cat fails and the block ends like "done || fail"
+set -o pipefail
 
 # setup environment variables; these and other prefixed with _BLE (see below) are passed to child (called) scripts
 
@@ -534,7 +549,6 @@ _PRESERVED='PATH:TAGS:_BLE_CALLED:_BLE_DELAYED:_BLE_LEVEL:_BLE_NAV:' # preserved
 _SKIP=0                      # skipping mode? reseted on next block
 _BASE_DIR=''                 # will be set by runScript
 _ORIG_BASE_DIR=''            # will be set by runScript
-
 
 # Used internally to run a command (via sudo or timeout)
 if test "$1" = "--" ; then
@@ -557,13 +571,13 @@ fi
 
 # Help?
 if test "$1" = -h -o "$1" = --help ; then
-  help
+  bashibleHelp
   exit 0
 fi
 
 # No script passed?
 if test ${#1} -eq 0; then
-  help
+  bashibleHelp
   exit 1
 fi
 

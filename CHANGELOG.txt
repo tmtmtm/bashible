@@ -6,6 +6,9 @@
     etc.
   - internal functions printInfo, printWarn, printError renamed to print_info, print_warn, print_error
   - added var_empty function
+  - set -o pipefail by default
+  - deprecated set_contents + set_contents_safe, replaced with...
+  - new function write_to
 
 1.0.2 -> 1.0.3
   - templating engine (see 'template' function)

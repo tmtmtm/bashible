@@ -1,5 +1,7 @@
 ##### set_contents_safe CONTENTS PATH
 
+DEPRECATED, see write_to instead
+
 If a file is empty, write a contents into it. If the contents has been already found there, does nothing. Moreover, returns false if a different contents is there.
 
 ```bash
@@ -10,3 +12,4 @@ If a file is empty, write a contents into it. If the contents has been already f
 ##### See also
 
 [set_contents](set_contents.md)  
+[write_to](write_to.md)  
