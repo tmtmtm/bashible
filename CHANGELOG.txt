@@ -1,3 +1,6 @@
+1.0.4 -> 1.0.5
+  - fixed a "grep" bug in call()
+
 1.0.3 -> 1.0.4
   - tags() doesn't return true if no $TAGS are set; therefore you can use it like this:
     - echo ${TAGS:=all}  # value of $TAGS defaults to "all" unless set
