@@ -70,7 +70,7 @@ runScript() {
 
   _BASE_DIR=`dirname "$path"`
   _ORIG_BASE_DIR=${_BASE_DIR}
-  echo "$path $@" >> "${_BLE_CALLED}" || fail "can't write to _BLE_CALLED file (${_BLE_CALLED})"
+  echo "$path $*" >> "${_BLE_CALLED}" || fail "can't write to _BLE_CALLED file (${_BLE_CALLED})"
 
   if test ${#_BLE_NAV} -eq 0 ; then
     _BLE_NAV="`basename $path | sed "s/\.ble\$//" `"
@@ -126,7 +126,7 @@ call() {
   shift
   local path=`readlink -e "$script"` # get absolute path
   test ${#path} -gt 0 || fail "is the path of call '$script' correct? (got empty path on readlink)"
-  if ! grep -q -e "$path $*" <<< "${_BLE_CALLED}"; then
+  if ! grep -q -e "$path $*" < "${_BLE_CALLED}"; then
     force_call "$path" "$@"
   fi
 }
