@@ -1,3 +1,6 @@
+1.0.6 -> 1.0.7
+  - fixed a bug in write_to (multiline string were written on a single line)
+
 1.0.5 -> 1.0.6
   - fixed a "grep" bug again
 

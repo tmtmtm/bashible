@@ -511,7 +511,7 @@ write_to() {
   if ! value=`  "$@"  `; then
     fail "write_to: command '$@' has failed"
   fi
-  if ! echo $value > $path; then
+  if ! echo "$value" > $path; then
     fail "write_to: write failed"
   fi
 }
