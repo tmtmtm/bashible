@@ -1,3 +1,10 @@
+1.0.8 -> 1.0.9
+  - added copy function
+  - added version function
+
+1.0.7 -> 1.0.8
+  - reset_base_dir does chdir as well
+
 1.0.6 -> 1.0.7
   - fixed a bug in write_to (multiline string were written on a single line)
 

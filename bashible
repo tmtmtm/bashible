@@ -6,6 +6,10 @@
 
 ### INTERNAL FUNCTIONS (CAMEL CASE) ####
 
+version() {
+  echo 1.0.9
+}
+
 bashibleHelp() {
   echo "usage: bashible script.ble"
   echo
@@ -263,6 +267,7 @@ quiet() {
 
 reset_base_dir() {
   _BASE_DIR=${_ORIG_BASE_DIR}
+  cd "$_BASE_DIR"
 }
 
 set_var() {
@@ -366,6 +371,17 @@ comment_line_matching() {
   test ${#match} -eq 0 && { print_error "comment_line_matching: empty regexp is not allowed!"; return 1; }
   test ! -f "$path" && { print_error "comment_line_matching: file '$path' not found"; return 1; }
   sed -i -r -e 's/^([^#]*'$match'.*)$/#\1/' "$path"
+}
+
+copy() {
+  local path=$1
+  local mode=$2
+  local owner=$3
+  local basename=` basename "$path" `
+  cp -a "$path" . || fail "can't copy $path to $PWD"
+  test ${#mode} -gt 0 && { chmod "$mode" "$basename" || fail "can't chmod $basename"; }
+  test ${#owner} -gt 0 && { chown "$mode" "$basename" || fail "can't chown $basename"; }
+  return 0
 }
 
 i_am() {

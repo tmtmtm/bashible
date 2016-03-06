@@ -176,6 +176,7 @@ timeout 20 bash -c '
 [template TEMPLATE_PATH RESULT_PATH](docs/template.md)  
 [unless 'EVALUATED STRING' COMMAND ARG1 ARG2 ...](docs/unless.md)  
 [var_empty NAME](docs/var_empty.md)
+[version](docs/version.md)  
 [when 'EVALUATED STRING' COMMAND ARG1 ARG2 ...](docs/when.md)  
 
 ### Other functions
@@ -183,6 +184,7 @@ timeout 20 bash -c '
 [add_line LINE PATH](docs/add_line.md)  
 [append_line LINE PATH](docs/append_line.md)  
 [comment_line_matching REGEXP PATH](docs/comment_line_matching.md)  
+[copy SOURCE_PATH MODE OWNER](docs/copy.md)  
 [install_gem NAME NAME2 ...](docs/install_gem.md)  
 [prepend_line LINE PATH](docs/prepend_line.md)  
 [remove_line_matching REGEX PATH](docs/remove_line_matching.md)  
