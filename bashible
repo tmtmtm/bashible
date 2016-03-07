@@ -374,13 +374,16 @@ comment_line_matching() {
 }
 
 copy() {
-  local path=$1
-  local mode=$2
-  local owner=$3
-  local basename=` basename "$path" `
-  cp -a "$path" . || fail "can't copy $path to $PWD"
-  test ${#mode} -gt 0 && { chmod "$mode" "$basename" || fail "can't chmod $basename"; }
-  test ${#owner} -gt 0 && { chown "$mode" "$basename" || fail "can't chown $basename"; }
+  local src=$1
+  local dest=$2
+  local mode=$3
+  local owner=$4
+  if test -d "$dest"; then
+     dest=$dest/`basename "$src"`
+  fi
+  cp -a "$src" "$dest" || fail "can't copy $src to $dest"
+  test ${#mode} -gt 0 && { chmod "$mode" "$dest" || fail "can't chmod $dest"; }
+  test ${#owner} -gt 0 && { chown "$mode" "$dest" || fail "can't chown $dest"; }
   return 0
 }
 
