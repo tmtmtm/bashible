@@ -1,3 +1,11 @@
+1.0.10 -> 1.0.11
+  - removed function rpm_is_installed
+  - removed function yum_install
+  - removed function install_gem
+  - removed function set_contents
+  - removed function set_contents_safe
+  - function version renamed to bashible_version
+
 1.0.9 -> 1.0.10
   - copy function behaviour changed (now it is just like 'cp' plus chmod/chown)
 

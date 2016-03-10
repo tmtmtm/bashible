@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # bashible
-# (c) Jan Molic 2015
+# (c) Jan Molic 2016
 # https://github.com/mig1984/bashible
 
 ### INTERNAL FUNCTIONS (CAMEL CASE) ####
 
-version() {
-  echo 1.0.9
+bashible_version() {
+  echo 2.0.0
 }
 
 bashibleHelp() {
@@ -339,9 +339,7 @@ unless() {
   fi
 }
 
-
 ### USEFUL HELPERS ###
-
 
 add_line() {
   local line=$1
@@ -391,27 +389,6 @@ i_am() {
   containsElement "${USER}" "$@"
 }
 
-install_gem() {
-  while test ${#1} -gt 0 ; do
-    if ! gem list "$1" | grep -q -e "^$1 "; then
-      gem install "$1" || { print_error "install_gem: can't install gem"; return 1; }
-    else
-      print_info "already"
-    fi
-    shift
-  done
-}
-
-rpm_is_installed() {
-  for i in `rpm -q "$1"`; do
-    version="${i##$1}"
-    if egrep -q -e "^-[0-9]" <<< "$version"; then
-      return 0
-    fi
-  done
-  return 1
-}
-
 prepend_line() {
   local line=$1
   local path=$2
@@ -447,35 +424,6 @@ replace_line_matching() {
   test ${#match} -eq 0 && { print_error "replace_line_matching: empty regexp is not allowed!"; return 1; }
   test ! -f "$path" && { print_error "replace_line_matching: file '$path' not found"; return 1; }
   sed -i "s\\.*$match.*\\$replace\\g" "$path"
-}
-
-set_contents() {
-  local contents=$1
-  local path=$2
-  test -w "$path" || { print_error "set_contents: file '$path' is not writable or doesn't exist"; return 1; }
-  if ! local current="` cat "$path" `"; then
-    print_error "set_contents: can't read file '$path'"
-    return 1
-  fi
-  if test -s "$path" -a "$contents" = "$current"; then
-    return 0
-  fi
-  echo "$contents" > "$path"
-}
-
-set_contents_safe() {
-  local contents=$1
-  local path=$2
-  test -w "$path" || { print_error "set_contents_safe: file '$path' is not writable or doesn't exist"; return 1; }
-  if ! local current="` cat "$path" `"; then
-    print_error "set_contents_safe: can't read file '$path'"
-    return 1
-  fi
-  if test -s "$path" -a "$contents" != "$current"; then
-    print_error "set_contents_safe: file '$path' already contains something else"
-    return 1
-  fi
-  echo "$contents" > "$path"
 }
 
 symlink() {
@@ -533,18 +481,6 @@ write_to() {
   if ! echo "$value" > $path; then
     fail "write_to: write failed"
   fi
-}
-
-yum_install() {
-  while test ${#1} -gt 0 ; do
-    if ! rpm_is_installed "$1"; then
-      print_info "$1 seems to be not installed yet"
-      yum install -y "$1" || { print_error "yum_install: can't install $1"; return 1; }
-    else
-      print_info "$1 already"
-    fi
-    shift
-  done
 }
 
 #### START #####
