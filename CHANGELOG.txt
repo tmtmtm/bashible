@@ -1,4 +1,10 @@
-1.0.10 -> 1.0.11
+2.0.0 -> 2.0.1
+  - function template prints errors while processing templates correctly on stderr
+  - finally removed nonempty function
+  - the 'copy' function is deprecated again; unneeded
+  - fixed bug in comment_line_matching function (a space in regexp problem)
+
+1.0.10 -> 2.0.0
   - removed function rpm_is_installed
   - removed function yum_install
   - removed function install_gem

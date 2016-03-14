@@ -184,7 +184,7 @@ timeout 20 bash -c '
 [add_line LINE PATH](docs/add_line.md)  
 [append_line LINE PATH](docs/append_line.md)  
 [comment_line_matching REGEXP PATH](docs/comment_line_matching.md)  
-[copy SRC DEST MODE OWNER](docs/copy.md)  
+deprecated! [copy SRC DEST MODE OWNER](docs/copy.md)  
 [prepend_line LINE PATH](docs/prepend_line.md)  
 [remove_line_matching REGEX PATH](docs/remove_line_matching.md)  
 [replace_line_matching REGEXP STRING PATH](docs/replace_line_matching.md)  
