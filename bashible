@@ -4,11 +4,11 @@
 # (c) Jan Molic 2016
 # https://github.com/mig1984/bashible
 
-### INTERNAL FUNCTIONS (CAMEL CASE) ####
-
 bashible_version() {
-  echo 2.0.0
+  echo 2.0.2
 }
+
+### INTERNAL FUNCTIONS (CAMEL CASE) ####
 
 bashibleHelp() {
   echo "usage: bashible script.ble"
@@ -63,7 +63,6 @@ printFinish() {
 printTask() {
   echo -e "\033[37m - $* \033[0m" >&2
 }
-
 
 runScript() {
   local cmd=$1
@@ -207,7 +206,7 @@ import() {
   local path=`readlink -e "$1"` # get absolute path
   if ! grep ":$path:" <<< "${_BLE_IMPORTED}"; then
     _BLE_IMPORTED="${_BLE_IMPORTED}${path}:"
-    source "$path"
+    source "$path" || fail "problem while importing $path"
   fi
 }
 
@@ -315,7 +314,6 @@ when() {
     "$@"
   fi
 }
-
 
 unless() {
   if ! eval "$1"; then
