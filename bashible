@@ -354,20 +354,6 @@ comment_line_matching() {
   sed -i -r -e 's/^([^#]*'"$match"'.*)$/#\1/' "$path"
 }
 
-copy() {
-  local src=$1
-  local dest=$2
-  local mode=$3
-  local owner=$4
-  if test -d "$dest"; then
-     dest=$dest/`basename "$src"`
-  fi
-  cp -a "$src" "$dest" || fail "can't copy $src to $dest"
-  test ${#mode} -gt 0 && { chmod "$mode" "$dest" || fail "can't chmod $dest"; }
-  test ${#owner} -gt 0 && { chown "$mode" "$dest" || fail "can't chown $dest"; }
-  return 0
-}
-
 i_am() {
   containsElement "${USER}" "$@"
 }
