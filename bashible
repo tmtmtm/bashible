@@ -206,7 +206,7 @@ import() {
   local path=`readlink -e "$1"` # get absolute path
   if ! grep ":$path:" <<< "${_BLE_IMPORTED}"; then
     _BLE_IMPORTED="${_BLE_IMPORTED}${path}:"
-    source "$path" || fail "problem while importing $path"
+    source "$path" || fail "problem while importing $1 (readlink resolved it to '$path')"
   fi
 }
 
