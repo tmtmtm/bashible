@@ -1,3 +1,10 @@
+2.0.3
+  - readlink replaced by internal function absolutePath
+  - shebang is now #!/usr/bin/env bash (there is /usr/local/bin/bash on OpenBSD)
+  - delimiter ASCII 1 is used when doing sed to avoid conflicting REGEXPs
+  - timeout is now pure bash, does not need GNU coreutils (works on BSD, too)
+  - netstat (wait_for_tcp) fixed on OpenBSD
+
 2.0.1 -> 2.0.2
   - import function fails when 'source' fails
   - copy function removed
