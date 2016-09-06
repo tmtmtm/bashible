@@ -438,9 +438,9 @@ wait_for_tcp() {
   local what=$1
   local up=$2
   if test "$up" = up ; then
-    while ! netstat -lnt | grep "$what" | grep -q 'LISTEN'; do sleep 1; done
+    while ! netstat -lant | grep "$what" | grep -q 'LISTEN'; do sleep 1; done
   elif test "$up" = down ; then
-    while netstat -lnt | grep "$what" | grep -q 'LISTEN'; do sleep 1; done
+    while netstat -lant | grep "$what" | grep -q 'LISTEN'; do sleep 1; done
   else
     fail "wait for '$up'? (expected up|down)"
   fi
