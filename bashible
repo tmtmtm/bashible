@@ -424,6 +424,9 @@ symlink() {
 }
 
 timeout() {
+  if ! quiet which timeout; then
+    fail "timeout command not found, try to install GNU coreutils"
+  fi
   local time=$1; shift
   preserveEnvironment
   if ! /usr/bin/env timeout "$time" "${_BASHIBLE}" -- "$@"; then
