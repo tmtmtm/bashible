@@ -10,6 +10,19 @@ bashible_version() {
 
 ### INTERNAL FUNCTIONS (CAMEL CASE) ####
 
+function absolutePath() {
+   if test -f "$1"; then
+     pushd "${1%/*}">/dev/null
+     echo $PWD/${1##*/}
+   elif test -d "$1"; then
+     pushd "$1">/dev/null
+     echo $PWD
+   else
+     fail "Can't get absolute path of '$1'"
+   fi
+   popd >/dev/null
+}
+
 bashibleHelp() {
   echo "usage: bashible script.ble"
   echo
@@ -68,7 +81,7 @@ runScript() {
   local cmd=$1
   shift # shift the script name, pass other args as $1, $2, etc.
 
-  local path=`readlink -e "$cmd"` # get absolute path
+  local path=`absolutePath "$cmd"` # get absolute path
   test ${#path} -gt 0 || fail "is the script '$cmd' correct? (got an empty path on readlink)"
 
   _BASE_DIR=`dirname "$path"`
@@ -117,9 +130,9 @@ as() {
 }
 
 base_dir() {
-  _BASE_DIR=`readlink -e "$1"` # get absolute path
+  _BASE_DIR=`absolutePath "$1"` # get absolute path
   if test ${#_BASE_DIR} -eq 0; then
-    fail "base_dir: readlink -e '$1' failed"
+    fail "base_dir: absolutePath '$1' failed"
   fi
   cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
 }
@@ -127,7 +140,7 @@ base_dir() {
 call() { 
   local script=$1
   shift
-  local path=`readlink -e "$script"` # get absolute path
+  local path=`absolutePath "$script"` # get absolute path
   test ${#path} -gt 0 || fail "is the path of call '$script' correct? (got empty path on readlink)"
   if ! grep -q -e "$path $*" < "${_BLE_CALLED}"; then
     force_call "$path" "$@"
@@ -184,7 +197,7 @@ finish_if() {
 force_call() {
   local script=$1
   shift # shift the script name, pass other args as $1, $2, etc.
-  local path=`readlink -e "$script"` # get absolute path
+  local path=`absolutePath "$script"` # get absolute path
   if test ${#path} -eq 0 ; then
     fail "is the path of called script '$script' correct? (got empty path on readlink)"
   fi
@@ -203,7 +216,7 @@ halt_if() {
 }
 
 import() {
-  local path=`readlink -e "$1"` # get absolute path
+  local path=`absolutePath "$1"` # get absolute path
   if ! grep ":$path:" <<< "${_BLE_IMPORTED}"; then
     _BLE_IMPORTED="${_BLE_IMPORTED}${path}:"
     source "$path" || fail "problem while importing $1 (readlink resolved it to '$path')"
@@ -226,7 +239,7 @@ not() {
 }
 
 delayed_call() {
-  readlink -e "$1" >> "${_BLE_DELAYED}" || fail "can't write to _BLE_DELAYED file (${_BLE_DELAYED})"
+  absolutePath "$1" >> "${_BLE_DELAYED}" || fail "can't write to _BLE_DELAYED file (${_BLE_DELAYED})"
 }
 
 on() {
@@ -464,7 +477,7 @@ export _BLE_LEVEL
 export _BLE_NAV                   # navigation; is set in the parent, not here
 
 # setup variables (these are per script only)
-_BASHIBLE=`readlink -e "$0"` # the bashible script itself
+_BASHIBLE=`absolutePath "$0"` # the bashible script itself
 test ${#_BASHIBLE} -gt 0 || fail "can't get _BASHIBLE; is 'readlink' command present?"
 _ENVREPEAT=()                # used for copying preserved environment variables over sudo or a command
 _HOSTNAME=`hostname`
