@@ -5,7 +5,7 @@
 # https://github.com/mig1984/bashible
 
 bashible_version() {
-  echo 2.0.2
+  echo 2.0.4
 }
 
 ### INTERNAL FUNCTIONS (CAMEL CASE) ####
