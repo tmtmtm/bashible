@@ -424,14 +424,14 @@ symlink() {
 }
 
 timeout() {
-  if ! quiet which timeout; then
-    fail "timeout command not found, try to install GNU coreutils"
-  fi
   local time=$1; shift
-  preserveEnvironment
-  if ! /usr/bin/env timeout "$time" "${_BASHIBLE}" -- "$@"; then
+  ( "$@" ) & pid=$!
+  ( sleep $time && kill -INT $pid ) & killer=$!
+  if ! wait $pid ; then
     print_error "timeout expired"
     return 1
+  else
+    kill -INT $killer
   fi
 }
 
