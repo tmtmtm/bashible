@@ -22,7 +22,7 @@ Features:
   - does not re-implement The World (if you want a remote access, use ssh or pdsh, use bash for loops, etc.)
   - helper functions (files editing, etc.)
 
-At the moment, bashible is used on my Centos Linux only. It may not work on other platforms (sed, netstat, etc. may behave differently).
+At the moment, bashible is used on Centos, Ubuntu and OpenBSD. Not tested on other platforms.
 
 Suggestions are welcome! :-)
 
