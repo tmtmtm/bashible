@@ -1,3 +1,14 @@
+3.0.0
+  - LOTS OF FEATURES HAS BEEN REMOVED!
+  - import feature removed (was used in 'as' to re-import things after doing sudo)
+  - i_am_child removed, toplevel added: use "not toplevel" instead of "i_am_child"
+  - i_am accepts only one username now
+  - as (sudo) feature removed, use sudo, chpst or such tools to achieve that
+  - tags feature removed, there are many user-level workarounds to do that
+  - various fixes of 'sed' command (didn't work well on OpenBSD)
+  - removed "symlink" function, use just "ln -sf" instead
+  - sed replaced with cat in the prepend_line function
+
 2.0.3
   - readlink replaced by internal function absolutePath
   - shebang is now #!/usr/bin/env bash (there is /usr/local/bin/bash on OpenBSD)
