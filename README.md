@@ -1,6 +1,10 @@
 # BASHIBLE
 
-Bashible is a deployment/automation tool written in Bash.
+Bashible is a deployment/automation tool written in Bash (DSL).
+
+## !!! WARNING !!!
+
+Lots of features have been removed in the version 3.x. These features have been found unnecessary and easily replaceable.
 
 ## Why?
 
