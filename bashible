@@ -31,13 +31,6 @@ containsElement() {
   return 1
 }
 
-# export preserved variables
-preserveEnvironment() {
-  while read -d : var; do
-    test ${#var} -gt 0 && export "$var"
-  done <<< ${_PRESERVED}
-}
-
 printStart() {
   echo -e "\n\033[1;37;45m ${_BLE_NAV} \033[1;37;44m START \033[0m" >&2
 }
@@ -137,7 +130,6 @@ export_var() {
     set_var "$@"
   fi
   eval "
-    _PRESERVED=\"\${_PRESERVED}\$$name:\"
     export $name
   "
 }
@@ -427,7 +419,6 @@ _BASHIBLE=`absolutePath "$0"` # the bashible script itself
 test ${#_BASHIBLE} -gt 0 || fail "can't get _BASHIBLE; is 'readlink' command present?"
 _HOSTNAME=`hostname`
 test ${#_HOSTNAME} -gt 0 || fail "got no hostname"
-_PRESERVED='PATH:_BLE_CALLED:_BLE_DELAYED:_BLE_LEVEL:_BLE_NAV:' # preserved env variables; _PRESERVED itself is not preserved, must be explicitly declared in every script
 _SKIP=0                      # skipping mode? reseted on next block
 _BASE_DIR=''                 # will be set by runScript
 _ORIG_BASE_DIR=''            # will be set by runScript
@@ -446,8 +437,7 @@ if test "$1" = "--" ; then
     fi
   done <<< ${_BLE_IMPORTED}
 
-  # finally run the command; environment variables are included in the command
-  # (built by the preserveEnvironment)
+  # finally run the command
   "$@"
 
   exit $?
