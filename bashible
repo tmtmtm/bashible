@@ -198,10 +198,6 @@ delayed_call() {
   absolutePath "$1" >> "${_BLE_DELAYED}" || fail "can't write to _BLE_DELAYED file (${_BLE_DELAYED})"
 }
 
-on() {
-  containsElement "${_HOSTNAME}" "$@"
-}
-
 print_error() {
   echo -e "   \033[31m($*)\033[0m" >&2
 }
