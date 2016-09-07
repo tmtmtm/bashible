@@ -38,20 +38,6 @@ preserveEnvironment() {
   done <<< ${_PRESERVED}
 }
 
-# build _ENVREPEAT array
-buildENVREPEAT() {
-  _ENVREPEAT=()
-  _ENVREPEAT[0]=env
-  local cnt=1
-  while read -d : var; do
-    if test ${#var} -gt 0 ; then
-      _ENVREPEAT["$cnt"]="$var=`eval echo \\$$var`"
-      let cnt=cnt+1
-    fi
-  done <<< ${_PRESERVED}
-  #echo "${_ENVREPEAT[@]}"
-}
-
 printStart() {
   echo -e "\n\033[1;37;45m ${_BLE_NAV} \033[1;37;44m START \033[0m" >&2
 }
@@ -105,19 +91,6 @@ runScript() {
     printTask "$*"
     "$@" || fail "command '$@' failed (in `pwd`)";
   fi
-}
-
-as() {
-  local user=$1; shift
-  local orig_nav=$_BLE_NAV
-  local ex
-  export _BLE_NAV="${_BLE_NAV} (as $user)"
-  buildENVREPEAT
-  # login shell (-i) can't be used, otherwise it would chdir to homedir
-  # and relative paths would behave unexpectedly
-  sudo -u "$user" "${_ENVREPEAT[@]}" "_BLE_IMPORTED=${_BLE_IMPORTED}" "${_BASHIBLE}" -- "$@" ; ex=$?
-  _BLE_NAV=$orig_nav
-  return $ex
 }
 
 base_dir() {
@@ -452,7 +425,6 @@ export _BLE_NAV                   # navigation; is set in the parent, not here
 # setup variables (these are per script only)
 _BASHIBLE=`absolutePath "$0"` # the bashible script itself
 test ${#_BASHIBLE} -gt 0 || fail "can't get _BASHIBLE; is 'readlink' command present?"
-_ENVREPEAT=()                # used for copying preserved environment variables over sudo or a command
 _HOSTNAME=`hostname`
 test ${#_HOSTNAME} -gt 0 || fail "got no hostname"
 _PRESERVED='PATH:_BLE_CALLED:_BLE_DELAYED:_BLE_LEVEL:_BLE_NAV:' # preserved env variables; _PRESERVED itself is not preserved, must be explicitly declared in every script

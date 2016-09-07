@@ -15,7 +15,6 @@ Features:
   - a failed command halts the process
   - skipping tasks which have already been done
   - dependencies (calling a script from a script)
-  - running tasks via sudo plus preserving environment variables over the sudo
   - delayed script calling (an action is done only once at the very end)
   - simple template engine (in Bash :-))
   - auto-chdir (the working directory is always the same)
@@ -53,7 +52,7 @@ A bashible script.ble (scripts should have the .ble extension):
 
 @ Running bundle install
   - cd /var/www
-  - as webuser bundle install
+  - bundle install
 
 @ Install nginx unless already
   - skip_if test -x /usr/sbin/nginx
@@ -111,7 +110,7 @@ fi
 
 echo "Running bundle install"
 cd /var/www || { echo "can't chdir"; exit 1; }
-sudo -u webuser bundle install || { echo "can't bundle install"; exit 1; }
+bundle install || { echo "can't bundle install"; exit 1; }
 
 cd "$basedir" || { echo "can't chdir"; exit 1; }
 if [ ! -x /usr/sbin/nginx ]; then
@@ -145,7 +144,6 @@ timeout 20 bash -c '
 
 [@ MESSAGE](docs/@.md)  
 [- COMMAND ARG1 ARG2 ...](docs/-.md)  
-[as USER COMMAND ARG1 ARG2 ...](docs/as.md)  
 [base_dir PATH](docs/base_dir.md)  
 [call PATH ARG1 ARG2 ...](docs/call.md)  
 [delayed_call PATH](docs/delayed_call.md)  
