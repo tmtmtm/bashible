@@ -399,21 +399,6 @@ replace_line_matching() {
   sed -i -r "s${_DEL}.*$match.*${_DEL}$replace${_DEL}g" "$path"
 }
 
-symlink() {
-  local src=$1
-  local dest=$2
-  if test -L "$2" ; then
-    local curr="`readlink "$2"`"
-    if test "$curr" != "$1" ; then
-      print_error "symlink exists already, but points to different location: $curr (should $2)"
-      return 1
-    fi
-    print_info "already"
-  else
-    ln -s "$1" "$2" || { print_error "can't create symlink"; return 1; }
-  fi
-}
-
 timeout() {
   local time=$1; shift
   ( "$@" ) & pid=$!
