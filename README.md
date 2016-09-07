@@ -172,7 +172,6 @@ timeout 20 bash -c '
 [set_var NAME COMMAND ARG1 ARG2 ...](docs/set_var.md)  
 [skip MESSAGE](docs/skip.md)  
 [skip_if COMMAND ARG1 ARG2 ...](docs/skip_if.md)  
-[tags TAG TAG ...](docs/tags.md)  
 [template TEMPLATE_PATH RESULT_PATH](docs/template.md)  
 [unless 'EVALUATED STRING' COMMAND ARG1 ARG2 ...](docs/unless.md)  
 [var_empty NAME](docs/var_empty.md)  

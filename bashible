@@ -279,16 +279,6 @@ skip_if() {
   "$@" && skip || return 0
 }
 
-tags() {
-  local ary=($TAGS);
-  for tag in $@; do
-    if containsElement "$tag" "${ary[@]}"; then
-      return 0
-    fi
-  done
-  return 1
-}
-
 template() {
   local path=$1
   local res
@@ -367,7 +357,9 @@ prepend_line() {
   local path=$2
   quiet head -n 1 "$path" || { print_error "prepend_line: can't read file '$path'"; return 1; }
   if test "` head -n 1 "$path" `" != "$line" ; then
-    sed -i "1i $line" "$path" || { print_error "prepend_line: can't edit file '$path'"; return 1; }
+    cat - "$path" <<< "$line" > "$path.tmp"
+    mv "$path.tmp" "$path"
+    #sed -i "1i \\ $line" "$path" || { print_error "prepend_line: can't edit file '$path'"; return 1; }
   else
     print_info "already"
   fi
@@ -463,7 +455,7 @@ test ${#_BASHIBLE} -gt 0 || fail "can't get _BASHIBLE; is 'readlink' command pre
 _ENVREPEAT=()                # used for copying preserved environment variables over sudo or a command
 _HOSTNAME=`hostname`
 test ${#_HOSTNAME} -gt 0 || fail "got no hostname"
-_PRESERVED='PATH:TAGS:_BLE_CALLED:_BLE_DELAYED:_BLE_LEVEL:_BLE_NAV:' # preserved env variables; _PRESERVED itself is not preserved, must be explicitly declared in every script
+_PRESERVED='PATH:_BLE_CALLED:_BLE_DELAYED:_BLE_LEVEL:_BLE_NAV:' # preserved env variables; _PRESERVED itself is not preserved, must be explicitly declared in every script
 _SKIP=0                      # skipping mode? reseted on next block
 _BASE_DIR=''                 # will be set by runScript
 _ORIG_BASE_DIR=''            # will be set by runScript
