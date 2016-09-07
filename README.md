@@ -157,7 +157,6 @@ timeout 20 bash -c '
 [halt_if COMMAND ARG1 ARG2 ...](docs/halt_if.md)  
 [force_call PATH ARG1 ARG2 ...](docs/force_call.md)  
 [i_am](docs/i_am.md)  
-[import PATH](docs/import.md)  
 [not COMMAND ARG1 ARG2 ...](docs/not.md)  
 [on HOST HOST2 ...](docs/on.md)  
 [may_fail COMMAND ARG1 ARG2 ...](docs/may_fail.md)  

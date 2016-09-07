@@ -5,7 +5,7 @@
 # https://github.com/mig1984/bashible
 
 bashible_version() {
-  echo 2.0.4
+  echo 3.0.0
 }
 
 ### INTERNAL FUNCTIONS (CAMEL CASE) ####
@@ -18,8 +18,8 @@ bashibleHelp() {
   exit 1
 }
 
-function absolutePath { 
-  echo $(cd $(dirname $1); pwd)/$(basename $1); 
+function absolutePath {
+  echo $(cd $(dirname $1); pwd)/$(basename $1);
 }
 
 printStart() {
@@ -163,14 +163,6 @@ halt() {
 halt_if() {
   quiet type $1 || fail "halt_if: command '$1' not found"
   "$@" && halt || return 0
-}
-
-import() {
-  local path=`absolutePath "$1"` # get absolute path
-  if ! grep ":$path:" <<< "${_BLE_IMPORTED}"; then
-    _BLE_IMPORTED="${_BLE_IMPORTED}${path}:"
-    source "$path" || fail "problem while importing $1 (readlink resolved it to '$path')"
-  fi
 }
 
 may_fail() {
@@ -411,24 +403,6 @@ _ORIG_BASE_DIR=''            # will be set by runScript
 _DEL=` printf '\x1' `        # regexp delimiter
 
 
-# Used internally to run a command (via sudo or timeout)
-if test "$1" = "--" ; then
-
-  shift
-
-  # first re-import all imported files
-  while read -d : imp; do
-    if test ${#imp} -gt 0 ; then
-      source "$imp" || fail "problem while re-importing $imp"
-    fi
-  done <<< ${_BLE_IMPORTED}
-
-  # finally run the command
-  "$@"
-
-  exit $?
-fi
-
 # Help?
 if test "$1" = -h -o "$1" = --help ; then
   bashibleHelp
@@ -443,8 +417,6 @@ fi
 
 # Finally run the script!
 if test "${_BLE_LEVEL}" = 0 ; then
-
-  _BLE_IMPORTED=''                 # imported files (re-sourced after sudo); shouldn't be set here, but...
 
   # a script path is passed as the first argument and this is the top script
 
@@ -472,8 +444,6 @@ if test "${_BLE_LEVEL}" = 0 ; then
   rm "${_BLE_DELAYED}"
 
 else
-
-  _BLE_IMPORTED=''                # imported files (re-sourced after sudo); shouldn't be set here, but...
 
   # a script path is passed as the first argument and this is a child script
 
