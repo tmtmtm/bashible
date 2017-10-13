@@ -5,7 +5,7 @@
 # https://github.com/mig1984/bashible
 
 bashible_version() {
-  echo 3.0.0
+  echo 3.0.1
 }
 
 ### INTERNAL FUNCTIONS (CAMEL CASE) ####
@@ -18,9 +18,9 @@ bashibleHelp() {
   exit 1
 }
 
-function absolutePath {
-  echo $(cd $(dirname $1); pwd)/$(basename $1);
-}
+absolutePath () ( 
+  cd $(dirname $1) 2>/dev/null && echo "$(pwd)/${1##*/}"; 
+)
 
 printStart() {
   echo -e "\n\033[1;37;45m ${_BLE_NAV} \033[1;37;44m START \033[0m" >&2
@@ -39,11 +39,11 @@ printTask() {
 }
 
 runScript() {
-  local cmd=$1
+  local cmd=$1 path
   shift # shift the script name, pass other args as $1, $2, etc.
 
-  local path=`absolutePath "$cmd"` # get absolute path
-  test ${#path} -gt 0 || fail "is the script '$cmd' correct? (got an empty path on readlink)"
+  path=`absolutePath "$cmd"` || # get absolute path
+    fail "is the script '$cmd' correct? (got an empty path on readlink)"
 
   _BASE_DIR=`dirname "$path"`
   _ORIG_BASE_DIR=${_BASE_DIR}
@@ -78,18 +78,16 @@ runScript() {
 }
 
 base_dir() {
-  _BASE_DIR=`absolutePath "$1"` # get absolute path
-  if test ${#_BASE_DIR} -eq 0; then
+  _BASE_DIR=`absolutePath "$1"` || # get absolute path
     fail "base_dir: absolutePath '$1' failed"
-  fi
   cd "${_BASE_DIR}" || fail "can't chdir to base dir '${_BASE_DIR}'"
 }
 
 call() { 
-  local script=$1
+  local script=$1 path
   shift
-  local path=`absolutePath "$script"` # get absolute path
-  test ${#path} -gt 0 || fail "is the path of call '$script' correct? (got empty path on readlink)"
+  path=`absolutePath "$script"` || # get absolute path
+    fail "is the path of call '$script' correct? (got empty path on readlink)"
   if ! grep -q -e "$path $*" < "${_BLE_CALLED}"; then
     force_call "$path" "$@"
   fi
@@ -145,12 +143,10 @@ finish_if() {
 }
 
 force_call() {
-  local script=$1
+  local script=$1 path
   shift # shift the script name, pass other args as $1, $2, etc.
-  local path=`absolutePath "$script"` # get absolute path
-  if test ${#path} -eq 0 ; then
+  path=`absolutePath "$script"` || # get absolute path
     fail "is the path of called script '$script' correct? (got empty path on readlink)"
-  fi
   _BLE_LEVEL=$((_BLE_LEVEL + 1)) "${_BASHIBLE}" "$path" "$@" || exit 1
 }
 
@@ -393,8 +389,8 @@ export _BLE_LEVEL
 export _BLE_NAV                   # navigation; is set in the parent, not here
 
 # setup variables (these are per script only)
-_BASHIBLE=`absolutePath "$0"` # the bashible script itself
-test ${#_BASHIBLE} -gt 0 || fail "can't get _BASHIBLE; is 'readlink' command present?"
+_BASHIBLE=`absolutePath "$0"` ||  # the bashible script itself
+   fail "can't get _BASHIBLE ??"
 _HOSTNAME=`hostname`
 test ${#_HOSTNAME} -gt 0 || fail "got no hostname"
 _SKIP=0                      # skipping mode? reseted on next block
